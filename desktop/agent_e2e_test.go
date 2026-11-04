@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"desktop/internal/agent"
-	"desktop/internal/store"
+	"github.com/justdoswift/justlearn/desktop/internal/agent"
+	"github.com/justdoswift/justlearn/desktop/internal/store"
 )
 
 // TestAgentLive runs one real tutor turn. It needs PI_API_KEY in ../.env or

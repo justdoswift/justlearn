@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"desktop/internal/store"
+	"github.com/justdoswift/justlearn/desktop/internal/store"
 
 	"github.com/egoist/mygo/ui"
 )

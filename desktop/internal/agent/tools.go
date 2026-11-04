@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"desktop/internal/store"
+	"github.com/justdoswift/justlearn/desktop/internal/store"
 )
 
 type toolset struct {

@@ -1,4 +1,4 @@
-module desktop
+module github.com/justdoswift/justlearn/desktop
 
 go 1.27.3
 

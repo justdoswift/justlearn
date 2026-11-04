@@ -1,7 +1,7 @@
 package main
 
 import (
-	"desktop/internal/store"
+	"github.com/justdoswift/justlearn/desktop/internal/store"
 
 	"github.com/egoist/mygo/ui"
 )

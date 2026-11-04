@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"desktop/internal/store"
+	"github.com/justdoswift/justlearn/desktop/internal/store"
 )
 
 // Engine runs one tutor turn: it streams the model's text, runs the learning

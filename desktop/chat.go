@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"desktop/internal/store"
+	"github.com/justdoswift/justlearn/desktop/internal/store"
 
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/markdown"

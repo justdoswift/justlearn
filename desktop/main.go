@@ -4,7 +4,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"desktop/internal/store"
+	"github.com/justdoswift/justlearn/desktop/internal/store"
 
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
