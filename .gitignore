@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+data/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+tsconfig.tsbuildinfo
+.env.opencode
+
+# local agent settings and design process files
+.claude/
+.oil-ui/
+desktop/testdata/*.png
