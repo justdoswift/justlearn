@@ -62,7 +62,7 @@ func (a *app) main(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
 	ui.Box(c).Fill().Padding(8).Children(func() {
 		ui.Column(c).Fill().FillHeight().Background(p.surface).
-			BorderWidth(1).BorderColor(p.hairline).Radius(10).Children(func() {
+			BorderWidth(1).BorderColor(p.hairline).Radius(10).Clip().Children(func() {
 			a.topbar(c, t)
 			a.chat(c, t)
 			a.composerBox(c, t)
