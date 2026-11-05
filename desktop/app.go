@@ -343,6 +343,20 @@ func (a *app) engineConfig() agent.Config {
 	}
 }
 
+func (a *app) visibleNodes() []store.Node {
+	q := strings.ToLower(strings.TrimSpace(a.search))
+	if q == "" {
+		return a.nodes
+	}
+	out := make([]store.Node, 0, len(a.nodes))
+	for _, node := range a.nodes {
+		if strings.Contains(strings.ToLower(node.Title), q) {
+			out = append(out, node)
+		}
+	}
+	return out
+}
+
 func (a *app) visibleRoutes() []store.Goal {
 	q := strings.ToLower(strings.TrimSpace(a.search))
 	if q == "" {

@@ -22,19 +22,19 @@ func (a *app) routePanel(c *ui.Context, t *ui.Theme) {
 				Gap(6).AlignItems(ui.Center).Children(func() {
 				ui.Text(c, "知识热力图").FontSize(fsUI).FontWeight(600).TextColor(p.text)
 				ui.Spacer(c)
-				if a.current.ID != "" {
-					ui.Text(c, statusLabel(a.current.Status)).FontSize(fsCaption).
-						TextColor(statusTint(a.current.Status, p))
+				if node := a.selectedNode(); node.ID != "" {
+					a.nodeIndicator(c, t, node.Status)
 				}
 			})
 			ui.Scroll(c).Fill().TrackScroll(&a.routeScroll).Children(func() {
 				ui.Column(c).FillWidth().Padding(12, 10).Gap(10).Children(func() {
-					if a.current.ID == "" {
+					node := a.selectedNode()
+					if node.ID == "" {
 						ui.Text(c, "当前没有节点。在聊天里开始学习后，这里会显示本节的热力图。").
 							FontSize(fsCaption).TextColor(p.faint).LineHeight(1.55)
 						return
 					}
-					a.heatmapSection(c, t, a.current)
+					a.heatmapSection(c, t, node)
 				})
 			})
 		})
@@ -58,21 +58,15 @@ func (a *app) heatmapSection(c *ui.Context, t *ui.Theme, node store.Node) {
 		}
 		ui.Textf(c, "%d / %d 格达到%s", lit, len(node.Cells), masteryLabels[node.Threshold]).
 			FontSize(fsCaption).TextColor(p.faint)
-		ui.Grid(c).FillWidth().Columns(3).Gap(6).Children(func() {
+		ui.Grid(c).FillWidth().Columns(7).Gap(4).Children(func() {
 			for _, skill := range node.Cells {
 				cell := skill
-				bg, border, fg := heatStyle(cell.Mastery, t.Dark)
-				ui.Box(c).Height(64).Radius(radiusBadge).Background(bg).BorderWidth(1).BorderColor(border).
-					Padding(6).Children(func() {
-					ui.Column(c).FillWidth().FillHeight().Gap(2).Children(func() {
-						ui.Text(c, cell.Title).FontSize(fsCaption).FontWeight(600).TextColor(fg).
-							MaxLines(2).LineHeight(1.3)
-						ui.Spacer(c)
-						ui.Text(c, masteryLabels[cell.Mastery]).FontSize(fsCaption).TextColor(fg)
-					})
-				})
+				bg, border, _ := heatStyle(cell.Mastery, t.Dark)
+				ui.Box(c).Size(24, 24).Radius(4).Background(bg).BorderWidth(1).BorderColor(border).
+					Tooltip(cell.Title + " · " + masteryLabels[cell.Mastery])
 			}
 		})
+		ui.Text(c, "悬停格子查看名称").FontSize(10).TextColor(p.faint)
 		ui.Row(c).Gap(10).AlignItems(ui.Center).Children(func() {
 			for level := 0; level < 4; level++ {
 				bg, border, _ := heatStyle(level, t.Dark)
@@ -83,22 +77,4 @@ func (a *app) heatmapSection(c *ui.Context, t *ui.Theme, node store.Node) {
 			}
 		})
 	})
-}
-
-func statusLabel(status string) string {
-	switch status {
-	case "done":
-		return "掌握"
-	case "current":
-		return "学习中"
-	default:
-		return "待学"
-	}
-}
-
-func statusTint(status string, p palette) ui.Color {
-	if status == "current" {
-		return p.blue
-	}
-	return p.faint
 }

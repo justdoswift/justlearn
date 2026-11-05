@@ -44,6 +44,7 @@ type palette struct {
 	recallBg       ui.Color
 	blueLine       ui.Color
 	rust           ui.Color
+	green          ui.Color
 	rustSoft       ui.Color
 	shadow         ui.Color
 	navActive      ui.Color
@@ -80,6 +81,7 @@ func paletteFor(dark bool) palette {
 			recallBg:       ui.Hex("#2A2118"),
 			blueLine:       ui.Hex("#5A3E1B"),
 			rust:           ui.Hex("#F97066"),
+			green:          ui.Hex("#4ADE80"),
 			rustSoft:       ui.Hex("#3A1D1A"),
 			shadow:         ui.RGBA(0, 0, 0, 0.45),
 			navActive:      ui.RGBA(255, 255, 255, 0.07),
@@ -113,6 +115,7 @@ func paletteFor(dark bool) palette {
 		blueSoft:       ui.Hex("#FDF4EA"),
 		blueLine:       ui.Hex("#EAD5BF"),
 		rust:           ui.Hex("#B42318"),
+		green:          ui.Hex("#16A34A"),
 		rustSoft:       ui.Hex("#FEF3F2"),
 		shadow:         ui.RGBA(17, 17, 17, 0.05),
 		navActive:      ui.Hex("#ECECEC"),
