@@ -10,8 +10,9 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
 	ui.Column(c).Width(280).FillHeight().Background(p.sidebar).
 		BorderWidth(0, 1, 0, 0).BorderColor(p.navLine).Children(func() {
-		ui.Column(c).Padding(2, 6, 2, 6).Children(func() {
-			ui.SearchField(c, &a.search).FillWidth().Placeholder("搜索节点")
+		ui.Column(c).Padding(6, 8, 4, 8).Children(func() {
+			ui.SearchField(c, &a.search).FillWidth().Height(28).Radius(6).
+				Background(p.fieldBg).BorderWidth(1).BorderColor(p.hairline).Placeholder("搜索节点")
 		})
 
 		ui.Column(c).PaddingX(6).Children(func() {
@@ -51,7 +52,7 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 							ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
 								pct := p.faint
 								if active {
-									pct = p.sidebarText
+									pct = p.muted
 								}
 								ui.Text(c, g.Title).FontSize(fsRead).FontWeight(weight).MaxLines(1).
 									TextColor(p.sidebarText)
@@ -60,7 +61,8 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 							})
 						})
 						if active {
-							row.Background(p.navActive)
+							row.Background(p.navHover)
+							row.BorderWidth(0, 0, 0, 2).BorderColor(p.blue)
 						} else if row.Hovered() {
 							row.Background(p.navHover)
 						}
@@ -71,7 +73,7 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 						}
 						xColor := p.faint
 						if active {
-							xColor = p.sidebarText
+							xColor = p.muted
 						}
 						del := ui.ButtonBase(c).Size(18, 18).Radius(radiusBadge).Label("删除路线").
 							Tooltip("删除路线").Center().Children(func() {
@@ -115,7 +117,7 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 						})
 					})
 					if selected {
-						row.Background(p.navActive)
+						row.Background(p.blueStrong)
 					} else if row.Hovered() {
 						row.Background(p.navHover)
 					}

@@ -44,6 +44,7 @@ type palette struct {
 	hairline     ui.Color
 	borderStrong ui.Color
 	blue         ui.Color
+	blueStrong   ui.Color
 	blueSoft     ui.Color
 	recallBg     ui.Color
 	blueLine     ui.Color
@@ -51,7 +52,6 @@ type palette struct {
 	green        ui.Color
 	rustSoft     ui.Color
 	shadow       ui.Color
-	navActive    ui.Color
 	navHover     ui.Color
 	navLine      ui.Color
 	fieldBg      ui.Color
@@ -73,6 +73,7 @@ func paletteFor(dark bool) palette {
 			hairline:     ui.Hex("#3A3A3C"),
 			borderStrong: ui.Hex("#4C4C50"),
 			blue:         ui.Hex("#0A84FF"),
+			blueStrong:   ui.Hex("#0A6CD6"),
 			blueSoft:     ui.Hex("#0B2E4F"),
 			recallBg:     ui.Hex("#102A43"),
 			blueLine:     ui.Hex("#1F4E7A"),
@@ -80,7 +81,6 @@ func paletteFor(dark bool) palette {
 			rustSoft:     ui.Hex("#3A1C1B"),
 			green:        ui.Hex("#30D158"),
 			shadow:       ui.RGBA(0, 0, 0, 0.55),
-			navActive:    ui.Hex("#0A84FF"),
 			navHover:     ui.Hex("#2F2F31"),
 			navLine:      ui.Hex("#3A3A3C"),
 			fieldBg:      ui.Hex("#2C2C2E"),
@@ -100,13 +100,13 @@ func paletteFor(dark bool) palette {
 		hairline:     ui.Hex("#E6E6E6"),
 		borderStrong: ui.Hex("#D2D2D2"),
 		blue:         ui.Hex("#C2410C"),
+		blueStrong:   ui.Hex("#9A3412"),
 		blueSoft:     ui.Hex("#FFF4ED"),
 		blueLine:     ui.Hex("#FED7AA"),
 		rust:         ui.Hex("#B42318"),
 		green:        ui.Hex("#16A34A"),
 		rustSoft:     ui.Hex("#FEF3F2"),
 		shadow:       ui.RGBA(17, 17, 17, 0.05),
-		navActive:    ui.Hex("#ECECEC"),
 		navHover:     ui.Hex("#F1F1F1"),
 		navLine:      ui.Hex("#E6E6E6"),
 		fieldBg:      ui.Hex("#F5F5F5"),

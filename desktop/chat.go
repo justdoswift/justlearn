@@ -139,7 +139,7 @@ func (a *app) emptyChat(c *ui.Context, t *ui.Theme) {
 func (a *app) userBubble(c *ui.Context, t *ui.Theme, text string) {
 	p := paletteFor(t.Dark)
 	ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
-		ui.Box(c).MaxWidth(480).Padding(6, 10).Radius(radiusControl).Background(p.navActive).Children(func() {
+		ui.Box(c).MaxWidth(480).Padding(6, 10).Radius(radiusControl).Background(p.blueStrong).Children(func() {
 			ui.Text(c, text).FontSize(fsRead).LineHeight(1.5).TextColor(p.text)
 		})
 	})
@@ -273,7 +273,7 @@ func (a *app) composerBox(c *ui.Context, t *ui.Theme) {
 	}
 	ui.Column(c).FillWidth().AlignItems(ui.Center).BorderWidth(1, 0, 0, 0).
 		BorderColor(top).Background(p.surface2).Padding(6, 14, 8, 14).Children(func() {
-		ui.Row(c).FillWidth().MaxWidth(760).Gap(8).AlignItems(ui.Center).Children(func() {
+		ui.Row(c).FillWidth().MaxWidth(680).Gap(8).AlignItems(ui.Center).Children(func() {
 			plus := ui.ButtonBase(c).Size(26, 26).Radius(radiusBadge).Label("导入文本").
 				Tooltip("导入文本").Center().Children(func() {
 				ui.Text(c, "+").FontSize(15).TextColor(p.muted)
@@ -297,7 +297,7 @@ func (a *app) composerBox(c *ui.Context, t *ui.Theme) {
 			}
 
 			if a.streaming {
-				stop := ui.ButtonBase(c).Size(28, 28).Radius(14).Background(p.blue).
+				stop := ui.ButtonBase(c).Size(28, 28).Radius(14).Background(p.blueStrong).
 					Label("停止").Tooltip("停止").Center().Children(func() {
 					ui.Text(c, "■").FontSize(9).TextColor(ui.Hex("#FFFFFF"))
 				})
@@ -306,7 +306,7 @@ func (a *app) composerBox(c *ui.Context, t *ui.Theme) {
 				}
 			} else {
 				disabled := strings.TrimSpace(a.draft) == ""
-				bg, fg, border := p.blue, ui.Hex("#FFFFFF"), p.blue
+				bg, fg, border := p.blueStrong, ui.Hex("#FFFFFF"), p.blueStrong
 				if disabled {
 					bg, fg, border = p.fieldBg, p.faint, p.hairline
 				}
@@ -317,7 +317,7 @@ func (a *app) composerBox(c *ui.Context, t *ui.Theme) {
 				if disabled {
 					send.IgnoreInput(true)
 				} else if send.Hovered() {
-					send.Background(withAlpha(p.blue, 0.9))
+					send.Background(withAlpha(p.blueStrong, 0.9))
 				}
 				if !disabled && send.Clicked() {
 					a.send(a.draft)
@@ -325,7 +325,7 @@ func (a *app) composerBox(c *ui.Context, t *ui.Theme) {
 			}
 		})
 		if a.errText != "" {
-			ui.Column(c).FillWidth().MaxWidth(760).Padding(3, 0, 0, 0).Children(func() {
+			ui.Column(c).FillWidth().MaxWidth(680).Padding(3, 0, 0, 0).Children(func() {
 				ui.Text(c, a.errText).FontSize(fsCaption).TextColor(p.rust).MaxLines(2)
 			})
 		}
