@@ -2,16 +2,21 @@ package main
 
 import "github.com/egoist/mygo/ui"
 
-// Type scale: 12 / 14 / 16 / 20 / 24 / 30.
-// Compact editor scale: meta 11 / UI 12 / reading 13 / title 14 / section 16.
+// Type scale: meta 11 / UI 12 / reading 14 / title 17 / section 20 / display 24.
 const (
 	fsCaption float32 = 11
 	fsUI      float32 = 12
-	fsRead    float32 = 13
-	fsTitle   float32 = 14
-	fsSection float32 = 16
-	fsDisplay float32 = 18
+	fsRead    float32 = 14
+	fsTitle   float32 = 17
+	fsSection float32 = 20
+	fsDisplay float32 = 24
 )
+
+const serifFont = "Songti SC, Noto Serif SC, Source Han Serif SC, Georgia, serif"
+
+func serif(c *ui.Context, s string) ui.Element {
+	return ui.Text(c, s).Font(serifFont)
+}
 
 // Shadcn radii: rounded-lg 8 (cards), rounded-md 6 (controls), rounded-sm 4 (badges).
 const (
@@ -21,9 +26,8 @@ const (
 )
 
 const (
-	uiFont    = "system-ui"
-	serifFont = "Songti SC, Noto Serif SC, Source Han Serif SC, Georgia, serif"
-	monoFont  = "SF Mono, Menlo, Consolas, monospace"
+	uiFont   = "system-ui"
+	monoFont = "SF Mono, Menlo, Consolas, monospace"
 )
 
 type palette struct {
@@ -76,10 +80,10 @@ func paletteFor(dark bool) palette {
 			faint:          ui.Hex("#8A8A8A"),
 			hairline:       ui.Hex("#303030"),
 			borderStrong:   ui.Hex("#4A4A4A"),
-			blue:           ui.Hex("#F59E0B"),
-			blueSoft:       ui.Hex("#3A2A14"),
+			blue:           ui.Hex("#FB923C"),
+			blueSoft:       ui.Hex("#3A2418"),
 			recallBg:       ui.Hex("#2A2118"),
-			blueLine:       ui.Hex("#5A3E1B"),
+			blueLine:       ui.Hex("#6B3F24"),
 			rust:           ui.Hex("#F97066"),
 			green:          ui.Hex("#4ADE80"),
 			rustSoft:       ui.Hex("#3A1D1A"),
@@ -111,9 +115,9 @@ func paletteFor(dark bool) palette {
 		faint:          ui.Hex("#8C8C8C"),
 		hairline:       ui.Hex("#E6E6E6"),
 		borderStrong:   ui.Hex("#D2D2D2"),
-		blue:           ui.Hex("#B45309"),
-		blueSoft:       ui.Hex("#FDF4EA"),
-		blueLine:       ui.Hex("#EAD5BF"),
+		blue:           ui.Hex("#C2410C"),
+		blueSoft:       ui.Hex("#FFF4ED"),
+		blueLine:       ui.Hex("#FED7AA"),
 		rust:           ui.Hex("#B42318"),
 		green:          ui.Hex("#16A34A"),
 		rustSoft:       ui.Hex("#FEF3F2"),
@@ -169,27 +173,23 @@ func appTheme(dark bool) *ui.Theme {
 	return t
 }
 
-func serif(c *ui.Context, s string) ui.Element {
-	return ui.Text(c, s).Font(serifFont)
-}
-
 // heatStyle returns the fill, border and text colors of a mastery tile.
 func heatStyle(mastery int, dark bool) (ui.Color, ui.Color, ui.Color) {
 	p := paletteFor(dark)
 	switch mastery {
 	case 1:
 		if dark {
-			return ui.Hex("#3A2C1C"), ui.Hex("#5A422A"), ui.Hex("#F2D9BC")
+			return ui.Hex("#442A1B"), ui.Hex("#6B4226"), ui.Hex("#F8C9A8")
 		}
-		return ui.Hex("#F5E2CC"), ui.Hex("#EAD5BF"), ui.Hex("#8A4B16")
+		return ui.Hex("#FCE7D6"), ui.Hex("#F5C7A5"), ui.Hex("#9A3412")
 	case 2:
 		if dark {
-			return ui.Hex("#6B4A24"), ui.Hex("#8A6434"), ui.Hex("#F7E6D2")
+			return ui.Hex("#8A4B24"), ui.Hex("#A65D2E"), ui.Hex("#FBE0C8")
 		}
-		return ui.Hex("#E4B988"), ui.Hex("#DDB98D"), ui.Hex("#6B3A10")
+		return ui.Hex("#F5B48A"), ui.Hex("#EA9A6A"), ui.Hex("#7C2D12")
 	case 3:
 		if dark {
-			return ui.Hex("#D97706"), ui.Hex("#D97706"), ui.Hex("#FFFFFF")
+			return ui.Hex("#EA580C"), ui.Hex("#EA580C"), ui.Hex("#FFFFFF")
 		}
 		return p.blue, p.blue, ui.Hex("#FFFFFF")
 	default:

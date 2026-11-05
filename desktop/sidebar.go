@@ -58,7 +58,7 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 						row := ui.ButtonBase(c.Key("route:" + g.ID)).Grow(1).Height(26).Radius(radiusBadge).
 							PaddingX(6).Children(func() {
 							ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
-								ui.Text(c, g.Title).FontSize(fsUI).FontWeight(weight).MaxLines(1).
+								ui.Text(c, g.Title).FontSize(fsRead).FontWeight(weight).MaxLines(1).
 									TextColor(p.sidebarText)
 								ui.Spacer(c)
 								ui.Textf(c, "%d%%", g.Percent()).FontSize(fsCaption).TextColor(p.faint)
