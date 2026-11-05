@@ -39,7 +39,6 @@ type app struct {
 
 	draft      string
 	md         *markdown.Options
-	mdSerif    *markdown.Options
 	chatList   ui.ListState
 	composer   ui.Handle
 	focusDraft bool
@@ -70,7 +69,6 @@ type app struct {
 func newApp(st *store.Store) *app {
 	a := &app{store: st, quizChoices: map[string]int{}, routeOpen: true}
 	a.md = &markdown.Options{ShareSelection: true}
-	a.mdSerif = &markdown.Options{ShareSelection: true}
 	a.chatList.FollowEnd = true
 	a.chatList.FollowAnimation = &ui.Smooth
 	a.chatList.Key = func(row int) any {

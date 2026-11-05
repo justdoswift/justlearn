@@ -50,28 +50,14 @@ func (a *app) heatmapSection(c *ui.Context, t *ui.Theme, node store.Node) {
 		}
 	}
 	ui.Column(c).FillWidth().Gap(8).Children(func() {
-		serif(c, node.Title).FontSize(fsSection).FontWeight(600).TextColor(p.text).MaxLines(2)
+		ui.Text(c, node.Title).FontSize(fsSection).FontWeight(600).TextColor(p.text).MaxLines(2)
 		if len(node.Cells) == 0 {
 			ui.Text(c, "还没有热力图。开始这一节时教练会定义 3–9 个格子。").
 				FontSize(fsCaption).TextColor(p.faint).LineHeight(1.55)
 			return
 		}
-		ui.Row(c).FillWidth().Gap(6).AlignItems(ui.Center).Children(func() {
-			ui.Textf(c, "%d", lit).FontSize(fsDisplay).FontWeight(600).TextColor(p.text)
-			ui.Textf(c, "/ %d 格达到%s", len(node.Cells), masteryLabels[node.Threshold]).
-				FontSize(fsCaption).TextColor(p.faint)
-		})
-		ui.Row(c).FillWidth().Height(4).Gap(3).Children(func() {
-			for _, skill := range node.Cells {
-				cell := skill
-				seg := ui.Box(c).Grow(1).Height(4).Radius(2).Background(p.fieldBg)
-				if cell.Mastery >= node.Threshold {
-					seg.Background(p.blue)
-				} else if cell.Mastery > 0 {
-					seg.Background(p.blueLine)
-				}
-			}
-		})
+		ui.Textf(c, "%d / %d 格达到%s", lit, len(node.Cells), masteryLabels[node.Threshold]).
+			FontSize(fsUI).TextColor(p.faint)
 		ui.Grid(c).FillWidth().Columns(7).Gap(4).Children(func() {
 			for _, skill := range node.Cells {
 				cell := skill
