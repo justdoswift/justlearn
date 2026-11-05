@@ -4,8 +4,7 @@ import "github.com/egoist/mygo/ui"
 
 func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
-	ui.Column(c).Width(208).FillHeight().Background(p.sidebar).
-		BorderWidth(0, 1, 0, 0).BorderColor(p.navLine).Children(func() {
+	ui.Column(c).Width(208).FillHeight().Background(p.sidebar).Children(func() {
 		// Brand sits in the window's title band, next to the traffic lights.
 		bar := c.TitleBar()
 		ui.Row(c).Height(max(bar.Height, 40)).Padding(0, bar.Right+8, 0, bar.Left+8).

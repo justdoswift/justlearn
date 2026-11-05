@@ -126,6 +126,14 @@ func TestRenderEmpty(t *testing.T) {
 	if err := png.Encode(f, img); err != nil {
 		t.Fatal(err)
 	}
+	out, err := os.Create("../.oil-ui/redesign/after-empty.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer out.Close()
+	if err := png.Encode(out, img); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestInteractions(t *testing.T) {

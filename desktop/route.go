@@ -16,7 +16,7 @@ func (a *app) routePanel(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
 	bar := c.TitleBar()
 	ui.Column(c).Width(288).FillHeight().Background(p.surface2).
-		BorderWidth(0, 0, 0, 1).BorderColor(p.hairline).Children(func() {
+		BorderWidth(1).BorderColor(p.hairline).Radius(10).Children(func() {
 		ui.Row(c).Height(max(bar.Height, 40)).Padding(0, bar.Right+12, 0, 12).
 			Gap(6).AlignItems(ui.Center).Children(func() {
 			ui.Text(c, "学习路线").FontSize(fsUI).FontWeight(600).TextColor(p.text)
@@ -53,9 +53,9 @@ func (a *app) routePanel(c *ui.Context, t *ui.Theme) {
 							})
 						})
 						if active {
-							row.BorderWidth(0, 0, 0, 2).BorderColor(p.blue)
+							row.Background(p.navActive)
 						} else if row.Hovered() {
-							row.Background(p.surface)
+							row.Background(p.navHover)
 						}
 						if row.Clicked() {
 							a.selectGoal(g.ID)
@@ -67,7 +67,7 @@ func (a *app) routePanel(c *ui.Context, t *ui.Theme) {
 						ui.Text(c, "＋ 新路线").FontSize(fsCaption).TextColor(p.faint)
 					})
 					if newRoute.Hovered() {
-						newRoute.Background(p.surface)
+						newRoute.Background(p.navHover)
 					}
 					if newRoute.Clicked() {
 						a.newRoute()
@@ -92,7 +92,6 @@ func (a *app) routePanel(c *ui.Context, t *ui.Theme) {
 				ui.Box(c).Height(4)
 			})
 		})
-
 	})
 }
 
@@ -162,9 +161,9 @@ func (a *app) nodeTimeline(c *ui.Context, t *ui.Theme) {
 				})
 			})
 			if selected {
-				row.BorderWidth(0, 0, 0, 2).BorderColor(p.blue)
+				row.Background(p.navActive)
 			} else if row.Hovered() {
-				row.Background(p.surface)
+				row.Background(p.navHover)
 			}
 			if row.Clicked() {
 				a.routeNodeID = node.ID
@@ -189,7 +188,7 @@ func (a *app) nodeDot(c *ui.Context, t *ui.Theme, status string) {
 	case "current":
 		dot.Background(p.blueSoft).BorderWidth(1).BorderColor(p.blue)
 	default:
-		dot.Background(p.surface2).BorderWidth(1).BorderColor(p.borderStrong)
+		dot.Background(p.canvas).BorderWidth(1).BorderColor(p.borderStrong)
 	}
 }
 

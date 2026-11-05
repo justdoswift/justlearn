@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -36,98 +34,61 @@ func TestAgentLive(t *testing.T) {
 		Model:   os.Getenv("PI_MODEL"),
 		APIKey:  os.Getenv("PI_API_KEY"),
 	}}
-	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
 	defer cancel()
-	var text string
-	var tools []string
-	err = engine.Send(ctx, conv, "我想零基础学 SQL，帮我定一条 4 周的学习路线。", func(ev agent.Event) {
-		switch ev.Kind {
-		case "delta":
-			text += ev.Text
-		case "tool":
-			tools = append(tools, ev.Text)
+
+	send := func(input string) (string, []string) {
+		var text string
+		var tools []string
+		err := engine.Send(ctx, conv, input, func(ev agent.Event) {
+			switch ev.Kind {
+			case "delta":
+				text += ev.Text
+			case "tool":
+				tools = append(tools, ev.Text)
+			}
+		})
+		if err != nil {
+			t.Fatalf("send %q: %v (text=%q tools=%v)", input, err, text, tools)
 		}
-	})
-	if err != nil {
-		t.Fatalf("send: %v (text=%q tools=%v)", err, text, tools)
+		t.Logf("turn %q: tools=%v chars=%d text=%q", input, tools, len([]rune(text)), text)
+		if len([]rune(text)) > 800 {
+			t.Fatalf("tutor message is too long for a guided turn: %d chars", len([]rune(text)))
+		}
+		return text, tools
+	}
+
+	// The tutor may ask one diagnostic question before creating the route.
+	for _, input := range []string{
+		"我想零基础学 SQL，帮我定一条 4 周的学习路线。",
+		"我是开发，会一点 SQL，想用在数据分析上。",
+		"就按数据分析这个方向，先给我一条 4 周路线。",
+	} {
+		send(input)
+		nodes, _ := st.Nodes(conv.GoalID)
+		if len(nodes) >= 2 {
+			break
+		}
 	}
 	nodes, _ := st.Nodes(conv.GoalID)
 	goal, _ := st.Goal(conv.GoalID)
-	t.Logf("goal=%q nodes=%d tools=%v text=%q", goal.Title, len(nodes), tools, text)
 	if goal.Title == "新的学习路线" || len(nodes) < 2 {
 		t.Fatalf("route not created: goal=%q nodes=%d", goal.Title, len(nodes))
 	}
 
-	// Second turn: the tutor should define the heatmap and teach the first node.
-	text = ""
-	tools = nil
-	err = engine.Send(ctx, conv, "从第一节开始。", func(ev agent.Event) {
-		switch ev.Kind {
-		case "delta":
-			text += ev.Text
-		case "tool":
-			tools = append(tools, ev.Text)
+	// Start the first node; allow one diagnostic answer before the heatmap.
+	var current store.Node
+	for _, input := range []string{
+		"从第一节开始。",
+		"我大概知道 SELECT 和 WHERE，窗口函数没怎么用过。直接开始吧。",
+	} {
+		send(input)
+		current, _ = st.CurrentNode(conv.GoalID)
+		if len(current.Cells) > 0 {
+			break
 		}
-	})
-	if err != nil {
-		t.Fatalf("lesson send: %v (text=%q tools=%v)", err, text, tools)
 	}
-	current, _ := st.CurrentNode(conv.GoalID)
-	msgs, _ := st.Messages(conv.ID)
-	kinds := map[string]int{}
-	for _, m := range msgs {
-		kinds[m.Kind]++
-	}
-	t.Logf("lesson turn: tools=%v cells=%d threshold=%d kinds=%v", tools, len(current.Cells), current.Threshold, kinds)
 	if len(current.Cells) < 3 {
 		t.Fatalf("heatmap not defined: %d cells", len(current.Cells))
-	}
-	if kinds["lesson"] == 0 || kinds["quiz"] == 0 {
-		t.Fatalf("lesson/quiz missing: %v", kinds)
-	}
-
-	// Third turn: answer the first quiz question and let the tutor score it.
-	var answer string
-	for _, m := range msgs {
-		if m.Kind != "quiz" {
-			continue
-		}
-		var qp quizPayload
-		_ = json.Unmarshal([]byte(m.Payload), &qp)
-		if len(qp.Questions) > 0 && len(qp.Questions[0].Options) > 0 {
-			opt := qp.Questions[0].Options[0]
-			answer = fmt.Sprintf("第 1 题（%s）我选 A：%s。用我自己的话说，选这个是因为它唯一且不随业务变化。", qp.Questions[0].Prompt, opt)
-		}
-	}
-	if answer == "" {
-		t.Fatal("no quiz question to answer")
-	}
-	text = ""
-	tools = nil
-	err = engine.Send(ctx, conv, answer, func(ev agent.Event) {
-		switch ev.Kind {
-		case "delta":
-			text += ev.Text
-		case "tool":
-			tools = append(tools, ev.Text)
-		}
-	})
-	if err != nil {
-		t.Fatalf("answer send: %v", err)
-	}
-	current, _ = st.CurrentNode(conv.GoalID)
-	scored := 0
-	evidence := 0
-	for _, cell := range current.Cells {
-		if cell.Mastery > 0 {
-			scored++
-		}
-		if cell.Evidence > 0 {
-			evidence++
-		}
-	}
-	t.Logf("answer turn: tools=%v scored=%d/%d evidence=%d text=%q", tools, scored, len(current.Cells), evidence, text)
-	if evidence == 0 {
-		t.Fatalf("heatmap not updated after answer: %+v", current.Cells)
 	}
 }

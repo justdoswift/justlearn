@@ -451,10 +451,12 @@ func (a *app) view(c *ui.Context) {
 	ui.Themed(c, t).Fill().Children(func() {
 		ui.Row(c).Fill().Background(t.Background).Children(func() {
 			a.sidebar(c, t)
-			a.main(c, t)
-			if a.routeOpen {
-				a.routePanel(c, t)
-			}
+			ui.Row(c).Fill().FillHeight().Padding(10, 10, 10, 10).Gap(10).Children(func() {
+				a.main(c, t)
+				if a.routeOpen {
+					a.routePanel(c, t)
+				}
+			})
 		})
 		a.settingsDialog(c, t)
 	})

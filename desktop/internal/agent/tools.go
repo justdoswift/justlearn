@@ -11,9 +11,11 @@ import (
 )
 
 type toolset struct {
-	store  *store.Store
-	goalID string
-	convID string
+	store       *store.Store
+	goalID      string
+	convID      string
+	savedLesson bool
+	savedQuiz   bool
 }
 
 func schema(properties map[string]any, required ...string) map[string]any {
@@ -97,7 +99,7 @@ func Tools() []Tool {
 		}},
 		{Type: "function", Function: ToolFunction{
 			Name:        "save_lesson",
-			Description: "把一节微课保存成聊天里的卡片。正文只讲一个概念，5–8 分钟能读完，包含定义、例子、主动回忆、误区、一句带走的话。",
+			Description: "只在用户已经通过几轮问答弄懂一个侧面后，保存一张 200–300 字的要点卡；只总结一个点，不要写成整篇文章。",
 			Parameters: schema(map[string]any{
 				"title": str("微课标题"),
 				"body":  str("Markdown 正文"),
@@ -112,14 +114,14 @@ func Tools() []Tool {
 		}},
 		{Type: "function", Function: ToolFunction{
 			Name:        "save_quiz",
-			Description: "保存 2–3 道小测题。options 至少 2 个，answerIndex 从 0 开始，至少一道产出型题。",
+			Description: "一次只保存 1 道小测题；等用户回答并更新热力图后，下一轮再出下一题。options 至少 2 个，answerIndex 从 0 开始。",
 			Parameters: schema(map[string]any{
 				"questions": arr(obj(map[string]any{
 					"prompt":      str("题目"),
 					"options":     arr(str("选项"), 2, 4),
 					"answerIndex": num("正确选项下标，从 0 开始", 0, 3),
 					"explanation": str("一句解释"),
-				}), 2, 3),
+				}), 1, 1),
 			}, "questions"),
 		}},
 	}
@@ -287,6 +289,15 @@ func (t *toolset) execute(ctx context.Context, name, raw string) string {
 		if err := json.Unmarshal([]byte(raw), &args); err != nil {
 			return "参数解析失败：" + err.Error()
 		}
+		if t.savedQuiz {
+			return "这一轮已经出过题了：先停下来等用户回答，下一轮再保存要点卡。"
+		}
+		if len([]rune(args.Body)) > 500 {
+			return fmt.Sprintf("正文太长（%d 字）：一张卡只讲一个点，控制在 200–300 字；需要更多内容请在聊天里分多轮讲。", len([]rune(args.Body)))
+		}
+		if len(args.KeyPoints) > 3 {
+			return "要点最多 3 个：一张卡只总结一个侧面。"
+		}
 		node, err := t.currentNode()
 		if err != nil {
 			return "当前没有可保存的节点。"
@@ -310,6 +321,7 @@ func (t *toolset) execute(ctx context.Context, name, raw string) string {
 		if err := t.store.AppendMessage(msg); err != nil {
 			return "保存微课失败：" + err.Error()
 		}
+		t.savedLesson = true
 		return fmt.Sprintf("[tool:save_lesson] ok; kicker=第 %d 节 · %s; title=%s", node.Seq, node.Title, args.Title)
 
 	case "save_quiz":
@@ -324,8 +336,11 @@ func (t *toolset) execute(ctx context.Context, name, raw string) string {
 		if err := json.Unmarshal([]byte(raw), &args); err != nil {
 			return "参数解析失败：" + err.Error()
 		}
-		if len(args.Questions) < 2 || len(args.Questions) > 3 {
-			return "题目数量要在 2–3 之间。"
+		if t.savedLesson {
+			return "这一轮已经给过要点卡了：先停下等用户回答，下一轮再出题。"
+		}
+		if len(args.Questions) != 1 {
+			return "一次只出 1 道题：等用户回答并更新热力图后，下一轮再出下一题。"
 		}
 		node, err := t.currentNode()
 		if err != nil {
@@ -362,6 +377,7 @@ func (t *toolset) execute(ctx context.Context, name, raw string) string {
 		if err := t.store.AppendMessage(msg); err != nil {
 			return "保存小测失败：" + err.Error()
 		}
+		t.savedQuiz = true
 		return fmt.Sprintf("[tool:save_quiz] ok; questions=%d", len(questions))
 	}
 	return "未知工具：" + name
