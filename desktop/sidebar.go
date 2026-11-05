@@ -10,9 +10,14 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 		ui.Row(c).Height(max(bar.Height, 40)).Padding(0, bar.Right+8, 0, bar.Left+8).
 			Gap(6).AlignItems(ui.Center).DragWindow().Children(func() {
 			ui.Box(c).Size(18, 18).Radius(4).Background(p.navActive).Center().Children(func() {
-				ui.Text(c, "✦").FontSize(10).TextColor(p.sidebarText)
+				ui.Text(c, "✦").FontSize(10).TextColor(p.blue)
 			})
 			ui.Text(c, "JustLearn").FontSize(13).FontWeight(600).TextColor(p.sidebarText)
+		})
+
+		// Search
+		ui.Column(c).Padding(2, 6, 2, 6).Children(func() {
+			ui.SearchField(c, &a.search).FillWidth().Placeholder("搜索")
 		})
 
 		// New conversation
@@ -54,7 +59,7 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 		// Conversations, one line each.
 		ui.Scroll(c).Fill().Children(func() {
 			ui.Column(c).FillWidth().PaddingX(6).PaddingY(4).Children(func() {
-				for _, group := range groupConversations(a.convs) {
+				for _, group := range groupConversations(a.visibleConversations()) {
 					ui.Text(c, group.label).FontSize(fsCaption).TextColor(p.faint).
 						Padding(6, 4, 2, 6)
 					for _, conv := range group.items {

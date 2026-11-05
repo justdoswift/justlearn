@@ -15,94 +15,96 @@ func hairline(c *ui.Context, color ui.Color) {
 func (a *app) routePanel(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
 	bar := c.TitleBar()
-	ui.Column(c).Width(288).FillHeight().Background(p.surface2).
-		BorderWidth(1).BorderColor(p.hairline).Radius(10).Children(func() {
-		ui.Row(c).Height(max(bar.Height, 40)).Padding(0, bar.Right+12, 0, 12).
-			Gap(6).AlignItems(ui.Center).Children(func() {
-			ui.Text(c, "学习路线").FontSize(fsUI).FontWeight(600).TextColor(p.text)
-			ui.Textf(c, "%d 节点", len(a.nodes)).FontSize(fsCaption).TextColor(p.faint)
-			ui.Spacer(c)
-			closeBtn := ui.ButtonBase(c).Size(20, 20).Radius(radiusBadge).Center().Children(func() {
-				ui.Text(c, "×").FontSize(13).TextColor(p.muted)
-			})
-			if closeBtn.Hovered() {
-				closeBtn.Background(p.fieldBg)
-			}
-			if closeBtn.Clicked() {
-				a.routeOpen = false
-			}
-		})
-
-		ui.Scroll(c).Fill().TrackScroll(&a.routeScroll).Children(func() {
-			ui.Column(c).FillWidth().Padding(10, 8).Gap(8).Children(func() {
-				// Routes
-				ui.Column(c).FillWidth().Gap(1).Children(func() {
-					for _, goal := range a.goals {
-						g := goal
-						active := g.ID == a.goal.ID
-						weight := 400
-						if active {
-							weight = 600
-						}
-						wrap := ui.Row(c).FillWidth().Gap(2).AlignItems(ui.Center)
-						wrap.Children(func() {
-							row := ui.ButtonBase(c.Key("route:" + g.ID)).Grow(1).Height(22).Radius(radiusBadge).
-								PaddingX(6).Children(func() {
-								ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
-									ui.Text(c, g.Title).FontSize(fsCaption).FontWeight(weight).MaxLines(1).TextColor(p.text)
-									ui.Spacer(c)
-									ui.Textf(c, "%d%%", g.Percent()).FontSize(fsCaption).TextColor(p.faint)
-								})
-							})
-							if active {
-								row.Background(p.navActive)
-							} else if row.Hovered() {
-								row.Background(p.navHover)
-							}
-							if row.Clicked() {
-								a.selectGoal(g.ID)
-								a.routeNodeID = ""
-							}
-							del := ui.ButtonBase(c).Size(18, 18).Radius(radiusBadge).Label("删除路线").
-								Tooltip("删除路线").Center().Children(func() {
-								ui.Text(c, "×").FontSize(11).TextColor(p.faint)
-							})
-							if del.Hovered() {
-								del.Background(p.fieldBg)
-							}
-							if del.Clicked() {
-								a.askDeleteRoute(g.ID)
-							}
-						})
-					}
-					newRoute := ui.ButtonBase(c).FillWidth().Height(22).Radius(radiusBadge).
-						PaddingX(6).Justify(ui.Start).Children(func() {
-						ui.Text(c, "＋ 新路线").FontSize(fsCaption).TextColor(p.faint)
-					})
-					if newRoute.Hovered() {
-						newRoute.Background(p.navHover)
-					}
-					if newRoute.Clicked() {
-						a.newRoute()
-					}
+	ui.Box(c).Width(304).FillHeight().Padding(8, 8, 8, 0).Children(func() {
+		ui.Column(c).Fill().FillHeight().Background(p.surface).
+			BorderWidth(1).BorderColor(p.hairline).Radius(10).Children(func() {
+			ui.Row(c).Height(max(bar.Height, 40)).Padding(0, bar.Right+12, 0, 12).
+				Gap(6).AlignItems(ui.Center).Children(func() {
+				ui.Text(c, "学习路线").FontSize(fsUI).FontWeight(600).TextColor(p.text)
+				ui.Textf(c, "%d 节点", len(a.nodes)).FontSize(fsCaption).TextColor(p.faint)
+				ui.Spacer(c)
+				closeBtn := ui.ButtonBase(c).Size(20, 20).Radius(radiusBadge).Center().Children(func() {
+					ui.Text(c, "×").FontSize(13).TextColor(p.muted)
 				})
-
-				hairline(c, p.hairline)
-
-				node := a.selectedNode()
-				if node.ID == "" {
-					ui.Text(c, "还没有节点。在聊天里告诉教练你想学什么。").
-						FontSize(fsCaption).TextColor(p.faint).LineHeight(1.5)
-				} else {
-					a.heatmapSection(c, t, node)
+				if closeBtn.Hovered() {
+					closeBtn.Background(p.fieldBg)
 				}
+				if closeBtn.Clicked() {
+					a.routeOpen = false
+				}
+			})
 
-				if len(a.nodes) > 0 {
+			ui.Scroll(c).Fill().TrackScroll(&a.routeScroll).Children(func() {
+				ui.Column(c).FillWidth().Padding(10, 8).Gap(8).Children(func() {
+					// Routes
+					ui.Column(c).FillWidth().Gap(1).Children(func() {
+						for _, goal := range a.goals {
+							g := goal
+							active := g.ID == a.goal.ID
+							weight := 400
+							if active {
+								weight = 600
+							}
+							wrap := ui.Row(c).FillWidth().Gap(2).AlignItems(ui.Center)
+							wrap.Children(func() {
+								row := ui.ButtonBase(c.Key("route:" + g.ID)).Grow(1).Height(22).Radius(radiusBadge).
+									PaddingX(6).Children(func() {
+									ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
+										ui.Text(c, g.Title).FontSize(fsCaption).FontWeight(weight).MaxLines(1).TextColor(p.text)
+										ui.Spacer(c)
+										ui.Textf(c, "%d%%", g.Percent()).FontSize(fsCaption).TextColor(p.faint)
+									})
+								})
+								if active {
+									row.Background(p.navActive)
+								} else if row.Hovered() {
+									row.Background(p.navHover)
+								}
+								if row.Clicked() {
+									a.selectGoal(g.ID)
+									a.routeNodeID = ""
+								}
+								del := ui.ButtonBase(c).Size(18, 18).Radius(radiusBadge).Label("删除路线").
+									Tooltip("删除路线").Center().Children(func() {
+									ui.Text(c, "×").FontSize(11).TextColor(p.faint)
+								})
+								if del.Hovered() {
+									del.Background(p.fieldBg)
+								}
+								if del.Clicked() {
+									a.askDeleteRoute(g.ID)
+								}
+							})
+						}
+						newRoute := ui.ButtonBase(c).FillWidth().Height(22).Radius(radiusBadge).
+							PaddingX(6).Justify(ui.Start).Children(func() {
+							ui.Text(c, "＋ 新路线").FontSize(fsCaption).TextColor(p.faint)
+						})
+						if newRoute.Hovered() {
+							newRoute.Background(p.navHover)
+						}
+						if newRoute.Clicked() {
+							a.newRoute()
+						}
+					})
+
 					hairline(c, p.hairline)
-					a.nodeTimeline(c, t)
-				}
 
-				ui.Box(c).Height(4)
+					node := a.selectedNode()
+					if node.ID == "" {
+						ui.Text(c, "还没有节点。在聊天里告诉教练你想学什么。").
+							FontSize(fsCaption).TextColor(p.faint).LineHeight(1.5)
+					} else {
+						a.heatmapSection(c, t, node)
+					}
+
+					if len(a.nodes) > 0 {
+						hairline(c, p.hairline)
+						a.nodeTimeline(c, t)
+					}
+
+					ui.Box(c).Height(4)
+				})
 			})
 		})
 	})

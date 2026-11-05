@@ -12,6 +12,7 @@ import (
 
 func main() {
 	loadDotEnv()
+	mygo.Theme.SetSource(mygo.ThemeLight)
 	mygo.App.WhenReady(func() {
 		dir, err := mygo.App.Path(mygo.PathUserData)
 		if err != nil {

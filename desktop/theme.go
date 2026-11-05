@@ -63,70 +63,70 @@ type palette struct {
 func paletteFor(dark bool) palette {
 	if dark {
 		return palette{
-			canvas:         ui.Hex("#121211"),
-			surface:        ui.Hex("#1B1B19"),
-			surface2:       ui.Hex("#171715"),
-			sidebar:        ui.Hex("#121211"),
-			sidebarText:    ui.Hex("#F2F1EB"),
-			sidebarMuted:   ui.Hex("#9A978E"),
-			text:           ui.Hex("#F2F1EB"),
-			body:           ui.Hex("#DAD8D0"),
-			muted:          ui.Hex("#A09D94"),
-			faint:          ui.Hex("#8C8981"),
-			hairline:       ui.Hex("#252522"),
-			borderStrong:   ui.Hex("#3B3A34"),
-			blue:           ui.Hex("#8FA3FF"),
-			blueSoft:       ui.Hex("#1B2347"),
-			recallBg:       ui.Hex("#1A1B1F"),
-			blueLine:       ui.Hex("#33459E"),
-			rust:           ui.Hex("#E08A7A"),
-			rustSoft:       ui.Hex("#3A211D"),
+			canvas:         ui.Hex("#1A1A1A"),
+			surface:        ui.Hex("#1F1F1F"),
+			surface2:       ui.Hex("#242424"),
+			sidebar:        ui.Hex("#1A1A1A"),
+			sidebarText:    ui.Hex("#F2F2F2"),
+			sidebarMuted:   ui.Hex("#9A9A9A"),
+			text:           ui.Hex("#F2F2F2"),
+			body:           ui.Hex("#D4D4D4"),
+			muted:          ui.Hex("#A3A3A3"),
+			faint:          ui.Hex("#8A8A8A"),
+			hairline:       ui.Hex("#303030"),
+			borderStrong:   ui.Hex("#4A4A4A"),
+			blue:           ui.Hex("#F59E0B"),
+			blueSoft:       ui.Hex("#3A2A14"),
+			recallBg:       ui.Hex("#2A2118"),
+			blueLine:       ui.Hex("#5A3E1B"),
+			rust:           ui.Hex("#F97066"),
+			rustSoft:       ui.Hex("#3A1D1A"),
 			shadow:         ui.RGBA(0, 0, 0, 0.45),
 			navActive:      ui.RGBA(255, 255, 255, 0.07),
 			navHover:       ui.RGBA(255, 255, 255, 0.04),
 			navLine:        ui.RGBA(255, 255, 255, 0.08),
-			fieldBg:        ui.Hex("#21211E"),
-			composerBg:     ui.Hex("#2C2C28"),
-			composerText:   ui.Hex("#F2F0EA"),
-			composerMuted:  ui.Hex("#9C9991"),
+			fieldBg:        ui.Hex("#262626"),
+			composerBg:     ui.Hex("#242424"),
+			composerText:   ui.Hex("#F2F2F2"),
+			composerMuted:  ui.Hex("#9A9A9A"),
 			composerLine:   ui.RGBA(255, 255, 255, 0.12),
-			composerHover:  ui.RGBA(255, 255, 255, 0.10),
-			composerCircle: ui.Hex("#F7F6F1"),
-			composerInk:    ui.Hex("#1B1B18"),
-			composerDanger: ui.Hex("#E08A7A"),
+			composerHover:  ui.RGBA(255, 255, 255, 0.08),
+			composerCircle: ui.Hex("#F5F5F5"),
+			composerInk:    ui.Hex("#171717"),
+			composerDanger: ui.Hex("#F97066"),
 		}
 	}
 	return palette{
-		canvas:         ui.Hex("#FAFAF7"),
+		canvas:         ui.Hex("#F5F5F5"),
 		surface:        ui.Hex("#FFFFFF"),
-		surface2:       ui.Hex("#F5F5F1"),
-		sidebar:        ui.Hex("#FAFAF7"),
-		sidebarText:    ui.Hex("#171714"),
-		sidebarMuted:   ui.Hex("#73736C"),
-		text:           ui.Hex("#141413"),
-		body:           ui.Hex("#2C2B27"),
-		muted:          ui.Hex("#6C6A62"),
-		faint:          ui.Hex("#726F67"),
-		hairline:       ui.Hex("#E8E7E1"),
-		borderStrong:   ui.Hex("#D5D4CC"),
-		blue:           ui.Hex("#2B4EDB"),
-		blueSoft:       ui.Hex("#EDF0FF"),
-		blueLine:       ui.Hex("#C9D3FF"),
-		rust:           ui.Hex("#A33D2B"),
-		rustSoft:       ui.Hex("#FBEDE9"),
-		shadow:         ui.RGBA(17, 17, 17, 0.06),
-		navActive:      ui.Hex("#ECECE6"),
-		navHover:       ui.Hex("#F0F0EA"),
-		navLine:        ui.Hex("#E7E6E0"),
-		fieldBg:        ui.Hex("#F5F5F1"),
+		surface2:       ui.Hex("#FAFAFA"),
+		sidebar:        ui.Hex("#F5F5F5"),
+		sidebarText:    ui.Hex("#1A1A1A"),
+		sidebarMuted:   ui.Hex("#7A7A7A"),
+		text:           ui.Hex("#1A1A1A"),
+		body:           ui.Hex("#3A3A3A"),
+		muted:          ui.Hex("#6F6F6F"),
+		faint:          ui.Hex("#8C8C8C"),
+		hairline:       ui.Hex("#E6E6E6"),
+		borderStrong:   ui.Hex("#D2D2D2"),
+		blue:           ui.Hex("#B45309"),
+		blueSoft:       ui.Hex("#FDF4EA"),
+		blueLine:       ui.Hex("#EAD5BF"),
+		rust:           ui.Hex("#B42318"),
+		rustSoft:       ui.Hex("#FEF3F2"),
+		shadow:         ui.RGBA(17, 17, 17, 0.05),
+		navActive:      ui.Hex("#ECECEC"),
+		navHover:       ui.Hex("#F1F1F1"),
+		navLine:        ui.Hex("#E6E6E6"),
+		fieldBg:        ui.Hex("#F5F5F5"),
 		composerBg:     ui.Hex("#FFFFFF"),
-		composerText:   ui.Hex("#141413"),
-		composerMuted:  ui.Hex("#6C6A62"),
-		composerLine:   ui.Hex("#DCDAD2"),
-		composerHover:  ui.Hex("#F0F0EA"),
-		composerCircle: ui.Hex("#1B1B18"),
-		composerInk:    ui.Hex("#F7F6F1"),
-		composerDanger: ui.Hex("#A33D2B"),
+		composerText:   ui.Hex("#1A1A1A"),
+		composerMuted:  ui.Hex("#6F6F6F"),
+		composerLine:   ui.Hex("#E6E6E6"),
+		composerHover:  ui.Hex("#F5F5F5"),
+		composerCircle: ui.Hex("#1A1A1A"),
+		composerInk:    ui.Hex("#FFFFFF"),
+		composerDanger: ui.Hex("#B42318"),
 	}
 }
 
@@ -176,24 +176,24 @@ func heatStyle(mastery int, dark bool) (ui.Color, ui.Color, ui.Color) {
 	switch mastery {
 	case 1:
 		if dark {
-			return ui.Hex("#1C2340"), ui.Hex("#2E3A66"), ui.Hex("#C6D0FF")
+			return ui.Hex("#2E2317"), ui.Hex("#4A3824"), ui.Hex("#E8C9A8")
 		}
-		return ui.Hex("#D6DFFF"), ui.Hex("#BFCBFF"), ui.Hex("#24306E")
+		return ui.Hex("#FDF4EA"), ui.Hex("#EAD5BF"), ui.Hex("#8A4B16")
 	case 2:
 		if dark {
-			return ui.Hex("#31439B"), ui.Hex("#4658B8"), ui.Hex("#E6EBFF")
+			return ui.Hex("#5A3B1F"), ui.Hex("#7A522A"), ui.Hex("#F5E0C8")
 		}
-		return ui.Hex("#9FB0FA"), ui.Hex("#8497F0"), ui.Hex("#15246B")
+		return ui.Hex("#F5D9BF"), ui.Hex("#E7C09A"), ui.Hex("#6B3A10")
 	case 3:
 		if dark {
-			return ui.Hex("#3B51C9"), ui.Hex("#5A6FE0"), ui.Hex("#FFFFFF")
+			return ui.Hex("#D97706"), ui.Hex("#D97706"), ui.Hex("#FFFFFF")
 		}
 		return p.blue, p.blue, ui.Hex("#FFFFFF")
 	default:
 		if dark {
-			return ui.Hex("#201F1C"), ui.Hex("#33322D"), ui.Hex("#8C8981")
+			return ui.Hex("#242424"), ui.Hex("#333333"), ui.Hex("#8A8A8A")
 		}
-		return ui.Hex("#ECEAE3"), ui.Hex("#DCD8CD"), ui.Hex("#726F67")
+		return ui.Hex("#F5F5F5"), ui.Hex("#E6E6E6"), ui.Hex("#8C8C8C")
 	}
 }
 

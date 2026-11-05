@@ -60,11 +60,13 @@ func (a *app) mdOptions(t *ui.Theme) *markdown.Options {
 
 func (a *app) main(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
-	ui.Column(c).Fill().FillHeight().Background(p.surface2).
-		BorderWidth(1).BorderColor(p.hairline).Radius(10).Children(func() {
-		a.topbar(c, t)
-		a.chat(c, t)
-		a.composerBox(c, t)
+	ui.Box(c).Fill().Padding(8).Children(func() {
+		ui.Column(c).Fill().FillHeight().Background(p.surface).
+			BorderWidth(1).BorderColor(p.hairline).Radius(10).Children(func() {
+			a.topbar(c, t)
+			a.chat(c, t)
+			a.composerBox(c, t)
+		})
 	})
 }
 
@@ -299,97 +301,97 @@ func (a *app) composerBox(c *ui.Context, t *ui.Theme) {
 	if c.Shortcut(ui.Cmd, ui.KeyEnter) {
 		a.send(a.draft)
 	}
-	ui.Column(c).FillWidth().Children(func() {
-		hairline(c, p.hairline)
-		ui.Column(c).FillWidth().AlignItems(ui.Center).Padding(8, 18, 10, 18).Children(func() {
-			var modelButton ui.Element
-			ui.Themed(c, composerTheme(t)).FillWidth().Children(func() {
-				ui.Row(c).FillWidth().Justify(ui.Center).Children(func() {
-					ui.Row(c).FillWidth().MaxWidth(680).Gap(6).AlignItems(ui.Center).Children(func() {
-						plus := ui.ButtonBase(c).Size(28, 28).Radius(14).Label("导入文本").Tooltip("导入文本").Center().Children(func() {
-							ui.Text(c, "+").FontSize(16).TextColor(p.composerMuted)
-						})
-						if plus.Hovered() {
-							plus.Background(p.composerHover)
-						}
-						if plus.Clicked() {
-							a.attachText()
-						}
-
-						placeholder := "回答，或问点什么…"
-						if len(a.messages) == 0 {
-							placeholder = "问教练任何问题…"
-						}
-						field := ui.TextAreaBase(c, &a.draft).Grow(1).Lines(1, 5).FontSize(14).
-							TextColor(p.composerText).PlaceholderColor(p.composerMuted).
-							Placeholder(placeholder).Bind(&a.composer)
-						if a.focusDraft {
-							field.Focus()
-							a.focusDraft = false
-						}
-
-						modelButton = ui.ButtonBase(c).Padding(4, 7).Radius(14).Label("选择模型").Tooltip("选择模型").Children(func() {
-							ui.Row(c).Gap(4).AlignItems(ui.Center).Children(func() {
-								ui.Text(c, "✦").FontSize(10).TextColor(p.composerMuted)
-								ui.Text(c, prettyModel(cfgModel(a.store))).FontSize(fsUI).TextColor(p.composerMuted).MaxLines(1).MaxWidth(160)
-								ui.Text(c, "⌄").FontSize(10).TextColor(p.composerMuted)
-							})
-						})
-						if modelButton.Hovered() {
-							modelButton.Background(p.composerHover)
-						}
-						if modelButton.Clicked() {
-							a.modelMenuOpen = !a.modelMenuOpen
-							if a.modelMenuOpen {
-								a.loadModels()
-							}
-						}
-
-						if a.streaming {
-							stop := ui.ButtonBase(c).Size(28, 28).Radius(14).Background(p.composerCircle).
-								Label("停止").Tooltip("停止").Center().Children(func() {
-								ui.Text(c, "■").FontSize(9).TextColor(p.composerInk)
-							})
-							if stop.Clicked() {
-								a.cancelSend()
-							}
-						} else {
-							disabled := strings.TrimSpace(a.draft) == ""
-							arrow := p.composerInk
-							if disabled {
-								arrow = withAlpha(p.composerInk, 0.35)
-							}
-							send := ui.ButtonBase(c).Size(28, 28).Radius(14).Background(p.composerCircle).
-								Label("发送").Tooltip("发送").Center().Children(func() {
-								ui.Text(c, "↑").FontSize(14).FontWeight(600).TextColor(arrow)
-							})
-							if disabled {
-								send.IgnoreInput(true)
-							} else if send.Hovered() {
-								send.Background(ui.Hex("#FFFFFF"))
-							}
-							if !disabled && send.Clicked() {
-								a.send(a.draft)
-							}
-						}
-					})
-				})
+	top := p.hairline
+	if a.streaming {
+		top = p.blue
+	}
+	var modelButton ui.Element
+	ui.Column(c).FillWidth().AlignItems(ui.Center).BorderWidth(1, 0, 0, 0).
+		BorderColor(top).Background(p.surface).Padding(5, 12, 7, 12).Children(func() {
+		ui.Row(c).FillWidth().MaxWidth(680).Gap(6).AlignItems(ui.Center).Children(func() {
+			plus := ui.ButtonBase(c).Size(26, 26).Radius(radiusBadge).Label("导入文本").
+				Tooltip("导入文本").Center().Children(func() {
+				ui.Text(c, "+").FontSize(15).TextColor(p.muted)
 			})
-			if a.errText != "" {
-				ui.Column(c).FillWidth().MaxWidth(680).Padding(4, 0, 0, 0).Children(func() {
-					ui.Text(c, a.errText).FontSize(fsCaption).TextColor(p.rust).MaxLines(2)
-				})
+			if plus.Hovered() {
+				plus.Background(p.fieldBg)
 			}
-			ui.PopoverBase(c, modelButton, &a.modelMenuOpen, func(panel ui.Element) {
-				a.modelPanel(c, t, p, panel)
+			if plus.Clicked() {
+				a.attachText()
+			}
+
+			placeholder := "回答，或问点什么…"
+			if len(a.messages) == 0 {
+				placeholder = "问教练任何问题…"
+			}
+			field := ui.TextAreaBase(c, &a.draft).Grow(1).Lines(1, 5).FontSize(fsRead).
+				Placeholder(placeholder).Bind(&a.composer)
+			if a.focusDraft {
+				field.Focus()
+				a.focusDraft = false
+			}
+
+			modelButton = ui.ButtonBase(c).Padding(3, 6).Radius(radiusBadge).Label("选择模型").
+				Tooltip("选择模型").Children(func() {
+				ui.Row(c).Gap(4).AlignItems(ui.Center).Children(func() {
+					ui.Text(c, "✦").FontSize(10).TextColor(p.blue)
+					ui.Text(c, prettyModel(cfgModel(a.store))).FontSize(fsCaption).TextColor(p.muted).
+						MaxLines(1).MaxWidth(150)
+					ui.Text(c, "⌄").FontSize(10).TextColor(p.muted)
+				})
 			})
+			if modelButton.Hovered() {
+				modelButton.Background(p.fieldBg)
+			}
+			if modelButton.Clicked() {
+				a.modelMenuOpen = !a.modelMenuOpen
+				if a.modelMenuOpen {
+					a.loadModels()
+				}
+			}
+
+			if a.streaming {
+				stop := ui.ButtonBase(c).Size(28, 28).Radius(14).Background(p.text).
+					Label("停止").Tooltip("停止").Center().Children(func() {
+					ui.Text(c, "■").FontSize(9).TextColor(p.canvas)
+				})
+				if stop.Clicked() {
+					a.cancelSend()
+				}
+			} else {
+				disabled := strings.TrimSpace(a.draft) == ""
+				bg, fg := p.text, p.canvas
+				if disabled {
+					bg, fg = p.fieldBg, p.muted
+				}
+				send := ui.ButtonBase(c).Size(28, 28).Radius(14).Background(bg).
+					Label("发送").Tooltip("发送").Center().Children(func() {
+					ui.Text(c, "↑").FontSize(14).FontWeight(600).TextColor(fg)
+				})
+				if disabled {
+					send.IgnoreInput(true)
+				} else if send.Hovered() {
+					send.Background(withAlpha(p.text, 0.88))
+				}
+				if !disabled && send.Clicked() {
+					a.send(a.draft)
+				}
+			}
 		})
+		ui.PopoverBase(c, modelButton, &a.modelMenuOpen, func(panel ui.Element) {
+			a.modelPanel(c, t, p, panel)
+		})
+		if a.errText != "" {
+			ui.Column(c).FillWidth().MaxWidth(680).Padding(3, 0, 0, 0).Children(func() {
+				ui.Text(c, a.errText).FontSize(fsCaption).TextColor(p.rust).MaxLines(2)
+			})
+		}
 	})
 }
 
 func (a *app) modelPanel(c *ui.Context, t *ui.Theme, p palette, panel ui.Element) {
 	panel.Background(p.surface).Radius(radiusCard).BorderWidth(1).BorderColor(p.hairline).
-		Padding(4).Width(230).Shadow(0, 12, 30, 0, withAlpha(ui.Hex("#000000"), 0.18))
+		Padding(4).Width(230).Shadow(0, 12, 30, 0, withAlpha(ui.Hex("#000000"), 0.16))
 	panel.Children(func() {
 		ui.Column(c).FillWidth().Gap(1).Children(func() {
 			if a.modelsLoading {
@@ -414,7 +416,7 @@ func (a *app) modelPanel(c *ui.Context, t *ui.Theme, p palette, panel ui.Element
 				row := ui.ButtonBase(c).FillWidth().Height(24).Radius(radiusBadge).PaddingX(6).
 					Children(func() {
 						ui.Row(c).FillWidth().Gap(6).AlignItems(ui.Center).Children(func() {
-							ui.Text(c, prettyModel(model)).FontSize(fsUI).TextColor(p.text).Grow(1).MaxLines(1)
+							ui.Text(c, prettyModel(model)).FontSize(fsCaption).TextColor(p.text).Grow(1).MaxLines(1)
 							if model == current {
 								ui.Text(c, "✓").FontSize(fsCaption).TextColor(p.blue)
 							}
@@ -430,7 +432,7 @@ func (a *app) modelPanel(c *ui.Context, t *ui.Theme, p palette, panel ui.Element
 			hairline(c, p.hairline)
 			settings := ui.ButtonBase(c).FillWidth().Height(24).Radius(radiusBadge).PaddingX(6).
 				Justify(ui.Start).Children(func() {
-				ui.Text(c, "在设置中配置…").FontSize(fsUI).TextColor(p.muted)
+				ui.Text(c, "在设置中配置…").FontSize(fsCaption).TextColor(p.muted)
 			})
 			if settings.Hovered() {
 				settings.Background(p.fieldBg)

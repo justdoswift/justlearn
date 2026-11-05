@@ -48,6 +48,7 @@ type app struct {
 	routeScroll ui.ScrollState
 
 	settingsOpen     bool
+	search           string
 	confirmRouteOpen bool
 	pendingRouteID   string
 	confirmChatOpen  bool
@@ -340,6 +341,20 @@ func (a *app) engineConfig() agent.Config {
 		UserAgent:     os.Getenv("PI_USER_AGENT"),
 		SessionHeader: os.Getenv("PI_SESSION_HEADER"),
 	}
+}
+
+func (a *app) visibleConversations() []store.Conversation {
+	q := strings.ToLower(strings.TrimSpace(a.search))
+	if q == "" {
+		return a.convs
+	}
+	out := make([]store.Conversation, 0, len(a.convs))
+	for _, conv := range a.convs {
+		if strings.Contains(strings.ToLower(conv.Title), q) {
+			out = append(out, conv)
+		}
+	}
+	return out
 }
 
 func (a *app) reloadAll() error {
