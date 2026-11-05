@@ -179,14 +179,14 @@ func heatStyle(mastery int, dark bool) (ui.Color, ui.Color, ui.Color) {
 	switch mastery {
 	case 1:
 		if dark {
-			return ui.Hex("#2E2317"), ui.Hex("#4A3824"), ui.Hex("#E8C9A8")
+			return ui.Hex("#3A2C1C"), ui.Hex("#5A422A"), ui.Hex("#F2D9BC")
 		}
-		return ui.Hex("#FDF4EA"), ui.Hex("#EAD5BF"), ui.Hex("#8A4B16")
+		return ui.Hex("#F5E2CC"), ui.Hex("#EAD5BF"), ui.Hex("#8A4B16")
 	case 2:
 		if dark {
-			return ui.Hex("#5A3B1F"), ui.Hex("#7A522A"), ui.Hex("#F5E0C8")
+			return ui.Hex("#6B4A24"), ui.Hex("#8A6434"), ui.Hex("#F7E6D2")
 		}
-		return ui.Hex("#F5D9BF"), ui.Hex("#E7C09A"), ui.Hex("#6B3A10")
+		return ui.Hex("#E4B988"), ui.Hex("#DDB98D"), ui.Hex("#6B3A10")
 	case 3:
 		if dark {
 			return ui.Hex("#D97706"), ui.Hex("#D97706"), ui.Hex("#FFFFFF")
@@ -196,7 +196,7 @@ func heatStyle(mastery int, dark bool) (ui.Color, ui.Color, ui.Color) {
 		if dark {
 			return ui.Hex("#242424"), ui.Hex("#333333"), ui.Hex("#8A8A8A")
 		}
-		return ui.Hex("#F5F5F5"), ui.Hex("#E6E6E6"), ui.Hex("#8C8C8C")
+		return ui.Hex("#ECECEC"), ui.Hex("#DCDCDC"), ui.Hex("#8C8C8C")
 	}
 }
 
