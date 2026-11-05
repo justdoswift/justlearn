@@ -46,12 +46,12 @@ func (a *app) settingsDialog(c *ui.Context, t *ui.Theme) {
 						a.settingsOpen = false
 						a.errText = ""
 					}
-					save := ui.ButtonBase(c).Width(60).Height(24).Radius(radiusBadge).Background(p.text).Center().
+					save := ui.ButtonBase(c).Width(60).Height(24).Radius(radiusBadge).Background(p.blueStrong).Center().
 						Children(func() {
-							ui.Text(c, "保存").FontSize(fsCaption).FontWeight(600).TextColor(p.canvas)
+							ui.Text(c, "保存").FontSize(fsCaption).FontWeight(600).TextColor(ui.Hex("#FFFFFF"))
 						})
 					if save.Hovered() {
-						save.Background(withAlpha(p.text, 0.88))
+						save.Background(withAlpha(p.blueStrong, 0.9))
 					}
 					if save.Clicked() {
 						a.saveSettings()

@@ -13,11 +13,11 @@ import (
 )
 
 func cropComposer(img image.Image) image.Image {
-	return img.(*image.RGBA).SubImage(image.Rect(648, 1590, 2072, 1800))
+	return img.(*image.RGBA).SubImage(image.Rect(560, 1540, 2560, 1800))
 }
 
 func cropTall(img image.Image) image.Image {
-	return img.(*image.RGBA).SubImage(image.Rect(648, 1350, 2072, 1800))
+	return img.(*image.RGBA).SubImage(image.Rect(560, 1300, 2560, 1800))
 }
 
 func savePNG(t *testing.T, path string, img image.Image) {

@@ -12,7 +12,7 @@ import (
 
 func main() {
 	loadDotEnv()
-	mygo.Theme.SetSource(mygo.ThemeLight)
+	mygo.Theme.SetSource(mygo.ThemeDark)
 	mygo.App.WhenReady(func() {
 		dir, err := mygo.App.Path(mygo.PathUserData)
 		if err != nil {
@@ -33,7 +33,7 @@ func main() {
 			MinWidth:             1120,
 			MinHeight:            580,
 			StateKey:             "main",
-			BackgroundColor:      "#FAFAF7",
+			BackgroundColor:      "#1E1E1E",
 			TitleBarStyle:        mygo.TitleBarHidden,
 			TrafficLightPosition: &mygo.Point{X: 14, Y: 14},
 			Content:              ui.View(a.view),

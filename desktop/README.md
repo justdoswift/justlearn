@@ -1,6 +1,6 @@
 # JustLearn 客户端
 
-基于 [MyGo](https://mygo.egoist.dev) 的原生桌面客户端：Go 绘制界面，不需要 webview，也没有网页版。
+基于 [MyGo](https://mygo.egoist.dev) 的原生桌面客户端：Go 绘制界面，不需要 webview，也没有网页版。界面为 Xcode 式深色工作台：全局工具栏、源码列表式侧栏与无边框聊天区。
 
 ## 运行
 
@@ -26,7 +26,7 @@ SQLite 存在 `mygo.App.Path(PathUserData)/justlearn.db`（macOS 为 `~/Library/
 
 - `main.go`：应用入口、窗口与菜单
 - `app.go`：状态、刷新与会话切换
-- `sidebar.go` / `chat.go` / `route.go` / `settings.go`：界面
+- `toolbar.go` / `sidebar.go` / `chat.go` / `route.go` / `settings.go`：界面
 - `internal/store`：SQLite 数据层（路线、节点、热力图格子、会话、消息）
 - `internal/agent`：模型流式调用、工具循环、教学提示词
 
