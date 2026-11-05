@@ -41,7 +41,7 @@ func (a *app) mdOptions(t *ui.Theme) *markdown.Options {
 	p := paletteFor(t.Dark)
 	theme := markdown.DefaultTheme(t)
 	theme.FontSize = fsRead
-	theme.LineHeight = 1.65
+	theme.LineHeight = 1.72
 	theme.Font = uiFont
 	theme.Text = p.body
 	theme.Muted = p.muted
@@ -56,6 +56,27 @@ func (a *app) mdOptions(t *ui.Theme) *markdown.Options {
 	theme.BlockSpacing = 0.6
 	a.md.Theme = theme
 	return a.md
+}
+
+func (a *app) mdOptionsSerif(t *ui.Theme) *markdown.Options {
+	p := paletteFor(t.Dark)
+	theme := markdown.DefaultTheme(t)
+	theme.FontSize = fsRead
+	theme.LineHeight = 1.8
+	theme.Font = serifFont
+	theme.Text = p.body
+	theme.Muted = p.muted
+	theme.Link = p.blue
+	theme.Strong = p.text
+	theme.Code = p.text
+	theme.CodeFont = monoFont
+	theme.CodeBackground = p.fieldBg
+	theme.CodeBlockBackground = p.surface2
+	theme.CodeBlockBorder = p.surface2
+	theme.CodeBlockRadius = 4
+	theme.BlockSpacing = 0.7
+	a.mdSerif.Theme = theme
+	return a.mdSerif
 }
 
 func (a *app) main(c *ui.Context, t *ui.Theme) {
@@ -81,7 +102,7 @@ func (a *app) topbar(c *ui.Context, t *ui.Theme) {
 			if title == "" {
 				title = "新对话"
 			}
-			ui.Text(c, title).FontSize(13).FontWeight(600).TextColor(p.text).MaxLines(1).DragWindow()
+			ui.Text(c, title).FontSize(fsRead).FontWeight(600).TextColor(p.text).MaxLines(1).DragWindow()
 			ui.Box(c).Grow(1).FillHeight().DragWindow()
 			if a.streaming {
 				ui.Spinner(c)
@@ -140,7 +161,7 @@ func (a *app) emptyChat(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
 	ui.Column(c).FillWidth().AlignItems(ui.Center).Gap(8).Children(func() {
 		ui.Text(c, "✦").FontSize(16).TextColor(p.blue)
-		ui.Text(c, "开始一段新的学习").FontSize(fsSection).FontWeight(600).TextColor(p.text)
+		serif(c, "开始一段新的学习").FontSize(fsDisplay).FontWeight(600).TextColor(p.text)
 		ui.Text(c, "告诉教练你想学什么，路线和热力图会在聊天里长出来。").
 			FontSize(fsUI).TextColor(p.muted).TextAlign(ui.Center).MaxWidth(420).LineHeight(1.5)
 		ui.Row(c).Gap(6).PaddingY(4).Children(func() {
@@ -190,13 +211,13 @@ func (a *app) lessonSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 	p := paletteFor(t.Dark)
 	var payload lessonPayload
 	_ = json.Unmarshal([]byte(msg.Payload), &payload)
-	ui.Column(c).FillWidth().BorderWidth(1, 0, 0, 0).BorderColor(p.hairline).
-		Padding(10, 0).Gap(6).Children(func() {
+	ui.Column(c).FillWidth().BorderWidth(0, 0, 0, 2).BorderColor(p.blue).
+		Padding(8, 0, 2, 14).Gap(8).Children(func() {
 		a.kicker(c, t, payload.Kicker)
 		if payload.Title != "" {
-			ui.Text(c, payload.Title).FontSize(fsTitle).FontWeight(600).LineHeight(1.35).TextColor(p.text)
+			serif(c, payload.Title).FontSize(fsTitle).FontWeight(600).LineHeight(1.35).TextColor(p.text)
 		}
-		markdown.View(c, payload.Body, a.mdOptions(t)).FillWidth()
+		markdown.View(c, payload.Body, a.mdOptionsSerif(t)).FillWidth()
 		if payload.Code != "" {
 			ui.Box(c).FillWidth().Background(p.fieldBg).Radius(radiusBadge).Padding(8, 10).Children(func() {
 				ui.Text(c, payload.Code).FontSize(fsCaption).Font(monoFont).TextColor(p.body)
@@ -207,8 +228,8 @@ func (a *app) lessonSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 				BorderWidth(0, 0, 0, 2).BorderColor(p.blue).Padding(8, 10).Children(func() {
 				ui.Column(c).FillWidth().Gap(3).Children(func() {
 					ui.Text(c, "主动回忆").FontSize(fsCaption).FontWeight(600).TextColor(p.blue)
-					ui.Text(c, payload.Recall.Prompt).FontSize(fsUI).FontWeight(600).TextColor(p.text)
-					ui.Text(c, "参考答案："+payload.Recall.Answer).FontSize(fsCaption).TextColor(p.muted)
+					ui.Text(c, payload.Recall.Prompt).FontSize(fsRead).FontWeight(600).TextColor(p.text)
+					ui.Text(c, "参考答案："+payload.Recall.Answer).FontSize(fsUI).TextColor(p.muted)
 				})
 			})
 		}
@@ -228,14 +249,14 @@ func (a *app) quizSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 	p := paletteFor(t.Dark)
 	var payload quizPayload
 	_ = json.Unmarshal([]byte(msg.Payload), &payload)
-	ui.Column(c).FillWidth().BorderWidth(1, 0, 0, 0).BorderColor(p.hairline).
-		Padding(10, 0).Gap(8).Children(func() {
+	ui.Column(c).FillWidth().BorderWidth(0, 0, 0, 2).BorderColor(p.blue).
+		Padding(8, 0, 2, 14).Gap(8).Children(func() {
 		a.kicker(c, t, "小测")
 		for qi, q := range payload.Questions {
 			chosen, answered := a.quizChoices[q.ID]
 			ui.Column(c).FillWidth().Gap(4).Children(func() {
-				ui.Textf(c, "%d. %s", qi+1, q.Prompt).FontSize(fsRead).FontWeight(600).
-					LineHeight(1.5).TextColor(p.text)
+				serif(c, fmt.Sprintf("%d. %s", qi+1, q.Prompt)).FontSize(fsTitle).FontWeight(600).
+					LineHeight(1.45).TextColor(p.text)
 				for oi, option := range q.Options {
 					letter := string(rune('A' + oi))
 					correct := answered && oi == q.AnswerIndex
@@ -253,7 +274,7 @@ func (a *app) quizSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 						Padding(3, 6).Radius(radiusBadge).Background(bg).Children(func() {
 						ui.Row(c).FillWidth().Gap(7).AlignItems(ui.Center).Children(func() {
 							ui.Text(c, letter).FontSize(fsCaption).Font(monoFont).TextColor(fg)
-							ui.Text(c, option).Grow(1).FontSize(fsUI).TextColor(fg).MaxLines(2)
+							ui.Text(c, option).Grow(1).FontSize(fsRead).TextColor(fg).MaxLines(2)
 							if correct {
 								ui.Text(c, "正确答案").FontSize(fsCaption).TextColor(p.blue)
 							} else if wrong {
