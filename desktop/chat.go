@@ -74,7 +74,10 @@ func (a *app) topbar(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
 	ui.Row(c).FillWidth().Height(40).PaddingX(18).Justify(ui.Center).Children(func() {
 		ui.Row(c).FillWidth().MaxWidth(680).Gap(8).AlignItems(ui.Center).Children(func() {
-			title := a.active.Title
+			title := a.goal.Title
+			if title == "" {
+				title = a.active.Title
+			}
 			if title == "" {
 				title = "新对话"
 			}

@@ -1,6 +1,10 @@
 package main
 
-import "github.com/egoist/mygo/ui"
+import (
+	"strings"
+
+	"github.com/egoist/mygo/ui"
+)
 
 func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
@@ -38,7 +42,7 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 		ui.Scroll(c).Fill().Children(func() {
 			ui.Column(c).FillWidth().Padding(6, 6, 4, 6).Gap(1).Children(func() {
 				ui.Text(c, "路线").FontSize(fsCaption).TextColor(p.faint).Padding(4, 4, 2, 4)
-				routes := a.visibleRoutes()
+				routes := a.goals
 				if len(routes) == 0 {
 					ui.Text(c, "还没有路线").FontSize(fsCaption).TextColor(p.faint).Padding(4, 4)
 				}
@@ -87,7 +91,11 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 
 				nodes := a.visibleNodes()
 				if len(nodes) == 0 {
-					ui.Text(c, "没有匹配的节点").FontSize(fsCaption).TextColor(p.faint).Padding(4, 4)
+					empty := "还没有节点"
+					if strings.TrimSpace(a.search) != "" {
+						empty = "没有匹配的节点"
+					}
+					ui.Text(c, empty).FontSize(fsCaption).TextColor(p.faint).Padding(4, 4)
 				}
 				lastStage := ""
 				for _, n := range nodes {

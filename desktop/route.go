@@ -62,11 +62,22 @@ func (a *app) heatmapSection(c *ui.Context, t *ui.Theme, node store.Node) {
 			for _, skill := range node.Cells {
 				cell := skill
 				bg, border, _ := heatStyle(cell.Mastery, t.Dark)
-				ui.Box(c).Size(24, 24).Radius(4).Background(bg).BorderWidth(1).BorderColor(border).
+				ui.Box(c).Size(28, 28).Radius(4).Background(bg).BorderWidth(1).BorderColor(border).
 					Tooltip(cell.Title + " · " + masteryLabels[cell.Mastery])
 			}
 		})
-		ui.Text(c, "悬停格子查看名称").FontSize(10).TextColor(p.faint)
+		hairline(c, p.hairline)
+		ui.Column(c).FillWidth().Gap(2).Children(func() {
+			for _, skill := range node.Cells {
+				cell := skill
+				bg, border, _ := heatStyle(cell.Mastery, t.Dark)
+				ui.Row(c).FillWidth().Gap(6).AlignItems(ui.Center).Children(func() {
+					ui.Box(c).Size(10, 10).Radius(2).Background(bg).BorderWidth(1).BorderColor(border)
+					ui.Text(c, cell.Title).FontSize(fsUI).TextColor(p.body).Grow(1).MaxLines(1)
+					ui.Text(c, masteryLabels[cell.Mastery]).FontSize(fsCaption).TextColor(p.faint)
+				})
+			}
+		})
 		ui.Row(c).Gap(10).AlignItems(ui.Center).Children(func() {
 			for level := 0; level < 4; level++ {
 				bg, border, _ := heatStyle(level, t.Dark)

@@ -127,3 +127,12 @@ func TestRenderComposerDark(t *testing.T) {
 	tt.Frame()
 	savePNG(t, filepath.Join(dir, "model.png"), cropTall(tt.Image()))
 }
+
+func TestRenderModelMenuFull(t *testing.T) {
+	_, a := seed(t)
+	a.modelMenuOpen = true
+	a.modelsLoaded = true
+	a.models = []string{"deepseek-v4.1-flash"}
+	dir := filepath.Join("..", ".oil-ui", "composer")
+	savePNG(t, filepath.Join(dir, "model-full.png"), ui.Render(a.view, 1440, 900, 2))
+}
