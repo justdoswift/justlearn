@@ -2,5 +2,15 @@
   "name": "JustLearn",
   "identifier": "dev.justlearn.app",
   "version": "0.1.0",
-  "out": "build"
+  "out": "build",
+  "macos": {
+    "signingIdentity": "Developer ID Application: Peng Ge (6SUWJ2JVNM)",
+    "notarize": {
+      "keychainProfile": "justwrite-notary"
+    }
+  },
+  "updates": {
+    "publicKey": "Na3Jbkbio+HAiExXzKDzXWkFDsRiQwQttuelVdOPFXg=",
+    "github": "justdoswift/justlearn"
+  }
 }

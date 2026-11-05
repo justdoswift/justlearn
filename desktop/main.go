@@ -7,11 +7,14 @@ import (
 	"github.com/justdoswift/justlearn/desktop/internal/store"
 
 	"github.com/egoist/mygo"
+	"github.com/egoist/mygo/plugins/updater"
+	"github.com/egoist/mygo/plugins/updater/native"
 	"github.com/egoist/mygo/ui"
 )
 
 func main() {
 	loadDotEnv()
+	mygo.Use(native.Plugin)
 	mygo.Theme.SetSource(mygo.ThemeDark)
 	mygo.App.WhenReady(func() {
 		dir, err := mygo.App.Path(mygo.PathUserData)
@@ -42,7 +45,16 @@ func main() {
 			a.settingsOpen = true
 		}
 		mygo.App.SetMenu(mygo.NewMenu([]*mygo.MenuItem{
-			{Role: mygo.RoleAppMenu},
+			{Label: "JustLearn", Submenu: []*mygo.MenuItem{
+				{Role: mygo.RoleAbout},
+				updater.MenuItem(),
+				mygo.Separator(),
+				{Role: mygo.RoleHide},
+				{Role: mygo.RoleHideOthers},
+				{Role: mygo.RoleUnhide},
+				mygo.Separator(),
+				{Role: mygo.RoleQuit},
+			}},
 			{Label: "文件", Submenu: []*mygo.MenuItem{
 				{Label: "设置…", Accelerator: "CmdOrCtrl+,", Click: func(*mygo.MenuItem, *mygo.Window) {
 					a.win.Update(func() { a.openSettings() })
