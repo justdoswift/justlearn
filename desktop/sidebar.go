@@ -8,7 +8,7 @@ import (
 
 func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
-	ui.Column(c).Width(260).FillHeight().Background(p.sidebar).
+	ui.Column(c).Width(268).FillHeight().Background(p.sidebar).
 		BorderWidth(0, 1, 0, 0).BorderColor(p.navLine).Children(func() {
 		bar := c.TitleBar()
 		ui.Row(c).Height(max(bar.Height, 40)).Padding(0, bar.Right+8, 0, bar.Left+8).
@@ -55,7 +55,7 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 					}
 					wrap := ui.Row(c).FillWidth().Gap(2).AlignItems(ui.Center)
 					wrap.Children(func() {
-						row := ui.ButtonBase(c.Key("route:" + g.ID)).Grow(1).Height(24).Radius(radiusBadge).
+						row := ui.ButtonBase(c.Key("route:" + g.ID)).Grow(1).Height(26).Radius(radiusBadge).
 							PaddingX(6).Children(func() {
 							ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
 								ui.Text(c, g.Title).FontSize(fsUI).FontWeight(weight).MaxLines(1).
@@ -153,11 +153,11 @@ func (a *app) nodeIndicator(c *ui.Context, t *ui.Theme, status string) {
 	switch status {
 	case "done":
 		slot.Children(func() {
-			ui.Text(c, "✓").FontSize(11).FontWeight(600).TextColor(p.green)
+			ui.Text(c, "✓").FontSize(12).FontWeight(600).TextColor(p.green)
 		})
 	case "current":
 		slot.Children(func() {
-			ui.Box(c).Size(6, 6).Radius(3).Background(p.green)
+			ui.Box(c).Size(7, 7).Radius(3.5).Background(p.green)
 		})
 	}
 }

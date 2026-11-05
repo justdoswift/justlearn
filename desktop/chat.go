@@ -350,12 +350,12 @@ func (a *app) composerBox(c *ui.Context, t *ui.Theme) {
 				}
 			} else {
 				disabled := strings.TrimSpace(a.draft) == ""
-				bg, fg := p.text, p.canvas
+				bg, fg, border := p.text, p.canvas, p.text
 				if disabled {
-					bg, fg = p.fieldBg, p.muted
+					bg, fg, border = p.surface, p.faint, p.hairline
 				}
 				send := ui.ButtonBase(c).Size(28, 28).Radius(14).Background(bg).
-					Label("发送").Tooltip("发送").Center().Children(func() {
+					BorderWidth(1).BorderColor(border).Label("发送").Tooltip("发送").Center().Children(func() {
 					ui.Text(c, "↑").FontSize(14).FontWeight(600).TextColor(fg)
 				})
 				if disabled {

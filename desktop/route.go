@@ -19,7 +19,7 @@ func (a *app) routePanel(c *ui.Context, t *ui.Theme) {
 		ui.Column(c).Fill().FillHeight().Background(p.surface).
 			BorderWidth(1).BorderColor(p.hairline).Radius(10).Clip().Children(func() {
 			ui.Row(c).Height(max(bar.Height, 40)).Padding(0, bar.Right+12, 0, 12).
-				Gap(6).AlignItems(ui.Center).Children(func() {
+				Gap(6).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(p.hairline).Children(func() {
 				ui.Text(c, "知识热力图").FontSize(fsUI).FontWeight(600).TextColor(p.text)
 				ui.Spacer(c)
 				if node := a.selectedNode(); node.ID != "" {
@@ -50,24 +50,25 @@ func (a *app) heatmapSection(c *ui.Context, t *ui.Theme, node store.Node) {
 		}
 	}
 	ui.Column(c).FillWidth().Gap(8).Children(func() {
-		ui.Text(c, node.Title).FontSize(fsTitle).FontWeight(600).TextColor(p.text).MaxLines(2)
+		ui.Text(c, node.Title).FontSize(fsSection).FontWeight(600).TextColor(p.text).MaxLines(2)
 		if len(node.Cells) == 0 {
 			ui.Text(c, "还没有热力图。开始这一节时教练会定义 3–9 个格子。").
 				FontSize(fsCaption).TextColor(p.faint).LineHeight(1.55)
 			return
 		}
 		ui.Textf(c, "%d / %d 格达到%s", lit, len(node.Cells), masteryLabels[node.Threshold]).
-			FontSize(fsCaption).TextColor(p.faint)
+			FontSize(fsUI).TextColor(p.faint)
 		ui.Grid(c).FillWidth().Columns(7).Gap(4).Children(func() {
 			for _, skill := range node.Cells {
 				cell := skill
 				bg, border, _ := heatStyle(cell.Mastery, t.Dark)
-				ui.Box(c).Size(28, 28).Radius(4).Background(bg).BorderWidth(1).BorderColor(border).
+				ui.Box(c).Size(30, 30).Radius(4).Background(bg).BorderWidth(1).BorderColor(border).
 					Tooltip(cell.Title + " · " + masteryLabels[cell.Mastery])
 			}
 		})
 		hairline(c, p.hairline)
-		ui.Column(c).FillWidth().Gap(2).Children(func() {
+		ui.Text(c, "格子").FontSize(fsCaption).TextColor(p.faint)
+		ui.Column(c).FillWidth().Gap(3).Children(func() {
 			for _, skill := range node.Cells {
 				cell := skill
 				bg, border, _ := heatStyle(cell.Mastery, t.Dark)
