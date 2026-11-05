@@ -65,7 +65,7 @@ scripts/release.sh
 脚本会构建 `darwin/universal`、签名、公证、生成更新归档与 manifest，并用 `-upload` 上传到该版本的 GitHub **draft** release。检查草稿后发布：
 
 ```bash
-gh release edit v0.1.0 --draft=false
+gh release edit v0.0.1 --draft=false
 ```
 
 也可以 `PUBLISH=1 scripts/release.sh` 在构建上传后直接发布。更新私钥默认从 `~/Library/Application Support/mygo/update-keys/justlearn/mygo-update.key` 读取，可用 `MYGO_UPDATER_PRIVATE_KEY_FILE` 或 `MYGO_UPDATER_PRIVATE_KEY` 覆盖。
