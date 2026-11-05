@@ -17,6 +17,7 @@ JustLearn 是一个原生桌面的 AI 私人教师：在聊天里学、在聊天
 - **搜索与管理**：侧栏搜索节点；新建、切换、删除路线；删除路线会连同节点、格子、相关会话和消息一起删除，删除前有确认。
 - **模型选择**：工具栏右侧显示当前模型，菜单可切换；`/models` 可用时自动列出服务端模型。
 - **导入文本**：输入框左侧 `+` 可导入 `.txt` / `.md`，把内容放进草稿继续编辑。
+- **应用内更新**：从 GitHub Release 检查签名更新，下载后重启进入新版本；菜单「JustLearn → 检查更新…」可手动检查。
 - **原生桌面**：固定深色主题；标题栏与交通灯融合；SQLite 本地数据；Key 存系统钥匙串。
 
 ![Composer](docs/composer.png)
@@ -44,6 +45,31 @@ go tool mygo build
 
 产物在 `desktop/build/<os>-<arch>/`。macOS 会生成 `.app` 和 `.dmg`。
 
+## 发布与更新
+
+正式包用 Developer ID 签名、公证，并从 GitHub Release 分发；安装后的副本通过 MyGo 的签名更新机制自动检查新版本。
+
+首次发布前，确认 `desktop/mygo.json` 里的 `macos.signingIdentity` 与 `macos.notarize.keychainProfile` 对应本机的 Developer ID 和公证凭据。更新签名密钥单独生成，私钥不要进仓库：
+
+```bash
+cd desktop
+go tool mygo keygen -o "$HOME/Library/Application Support/mygo/update-keys/justlearn"
+```
+
+把输出的 `publicKey` 填进 `desktop/mygo.json` 的 `updates`，私钥保存在本机。发布时先提升 `version` 并写 `CHANGELOG.md` 里对应的 `## <version>` 段，提交后从仓库根目录运行：
+
+```bash
+scripts/release.sh
+```
+
+脚本会构建 `darwin/universal`、签名、公证、生成更新归档与 manifest，并用 `-upload` 上传到该版本的 GitHub **draft** release。检查草稿后发布：
+
+```bash
+gh release edit v0.1.0 --draft=false
+```
+
+也可以 `PUBLISH=1 scripts/release.sh` 在构建上传后直接发布。更新私钥默认从 `~/Library/Application Support/mygo/update-keys/justlearn/mygo-update.key` 读取，可用 `MYGO_UPDATER_PRIVATE_KEY_FILE` 或 `MYGO_UPDATER_PRIVATE_KEY` 覆盖。
+
 ## 模型
 
 任何 OpenAI 兼容的 `/chat/completions` 服务都可以。默认读取：
@@ -67,6 +93,8 @@ desktop/
   settings.go        模型设置对话框
   internal/store     SQLite 数据层
   internal/agent     流式模型客户端、工具循环、教学提示词
+scripts/release.sh   签名、公证并上传 GitHub Release
+CHANGELOG.md         应用内更新显示的版本说明
 ```
 
 设计规范见 [DESIGN.md](DESIGN.md)。
