@@ -39,7 +39,6 @@ type app struct {
 
 	draft      string
 	md         *markdown.Options
-	mdSerif    *markdown.Options
 	chatList   ui.ListState
 	composer   ui.Handle
 	focusDraft bool
@@ -70,7 +69,6 @@ type app struct {
 func newApp(st *store.Store) *app {
 	a := &app{store: st, quizChoices: map[string]int{}, routeOpen: true}
 	a.md = &markdown.Options{ShareSelection: true}
-	a.mdSerif = &markdown.Options{ShareSelection: true}
 	a.chatList.FollowEnd = true
 	a.chatList.FollowAnimation = &ui.Smooth
 	a.chatList.Key = func(row int) any {
@@ -604,15 +602,14 @@ func (a *app) saveSettings() {
 // build 2026-11 — native client.
 
 func (a *app) view(c *ui.Context) {
-	t := appTheme(c.Theme().Dark)
+	t := appTheme(true)
+	p := paletteFor(t.Dark)
 	ui.Themed(c, t).Fill().Children(func() {
-		ui.Row(c).Fill().Background(t.Background).Children(func() {
-			a.sidebar(c, t)
-			ui.Row(c).Fill().FillHeight().Padding(10, 10, 10, 10).Gap(10).Children(func() {
+		ui.Column(c).Fill().Background(p.canvas).Children(func() {
+			a.toolbar(c, t)
+			ui.Row(c).Fill().Children(func() {
+				a.sidebar(c, t)
 				a.main(c, t)
-				if a.routeOpen {
-					a.routePanel(c, t)
-				}
 			})
 		})
 		a.settingsDialog(c, t)

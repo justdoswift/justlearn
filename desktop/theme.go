@@ -31,109 +31,85 @@ const (
 )
 
 type palette struct {
-	canvas         ui.Color
-	surface        ui.Color
-	surface2       ui.Color
-	sidebar        ui.Color
-	sidebarText    ui.Color
-	sidebarMuted   ui.Color
-	text           ui.Color
-	body           ui.Color
-	muted          ui.Color
-	faint          ui.Color
-	hairline       ui.Color
-	borderStrong   ui.Color
-	blue           ui.Color
-	blueSoft       ui.Color
-	recallBg       ui.Color
-	blueLine       ui.Color
-	rust           ui.Color
-	green          ui.Color
-	rustSoft       ui.Color
-	shadow         ui.Color
-	navActive      ui.Color
-	navHover       ui.Color
-	navLine        ui.Color
-	fieldBg        ui.Color
-	composerBg     ui.Color
-	composerText   ui.Color
-	composerMuted  ui.Color
-	composerLine   ui.Color
-	composerHover  ui.Color
-	composerCircle ui.Color
-	composerInk    ui.Color
-	composerDanger ui.Color
+	canvas       ui.Color
+	surface      ui.Color
+	surface2     ui.Color
+	sidebar      ui.Color
+	sidebarText  ui.Color
+	sidebarMuted ui.Color
+	text         ui.Color
+	body         ui.Color
+	muted        ui.Color
+	faint        ui.Color
+	hairline     ui.Color
+	borderStrong ui.Color
+	blue         ui.Color
+	blueSoft     ui.Color
+	recallBg     ui.Color
+	blueLine     ui.Color
+	rust         ui.Color
+	green        ui.Color
+	rustSoft     ui.Color
+	shadow       ui.Color
+	navActive    ui.Color
+	navHover     ui.Color
+	navLine      ui.Color
+	fieldBg      ui.Color
 }
 
 func paletteFor(dark bool) palette {
 	if dark {
 		return palette{
-			canvas:         ui.Hex("#1A1A1A"),
-			surface:        ui.Hex("#1F1F1F"),
-			surface2:       ui.Hex("#242424"),
-			sidebar:        ui.Hex("#1A1A1A"),
-			sidebarText:    ui.Hex("#F2F2F2"),
-			sidebarMuted:   ui.Hex("#9A9A9A"),
-			text:           ui.Hex("#F2F2F2"),
-			body:           ui.Hex("#D4D4D4"),
-			muted:          ui.Hex("#A3A3A3"),
-			faint:          ui.Hex("#8A8A8A"),
-			hairline:       ui.Hex("#303030"),
-			borderStrong:   ui.Hex("#4A4A4A"),
-			blue:           ui.Hex("#FB923C"),
-			blueSoft:       ui.Hex("#3A2418"),
-			recallBg:       ui.Hex("#2A2118"),
-			blueLine:       ui.Hex("#6B3F24"),
-			rust:           ui.Hex("#F97066"),
-			green:          ui.Hex("#4ADE80"),
-			rustSoft:       ui.Hex("#3A1D1A"),
-			shadow:         ui.RGBA(0, 0, 0, 0.45),
-			navActive:      ui.RGBA(255, 255, 255, 0.07),
-			navHover:       ui.RGBA(255, 255, 255, 0.04),
-			navLine:        ui.RGBA(255, 255, 255, 0.08),
-			fieldBg:        ui.Hex("#262626"),
-			composerBg:     ui.Hex("#242424"),
-			composerText:   ui.Hex("#F2F2F2"),
-			composerMuted:  ui.Hex("#9A9A9A"),
-			composerLine:   ui.RGBA(255, 255, 255, 0.12),
-			composerHover:  ui.RGBA(255, 255, 255, 0.08),
-			composerCircle: ui.Hex("#F5F5F5"),
-			composerInk:    ui.Hex("#171717"),
-			composerDanger: ui.Hex("#F97066"),
+			canvas:       ui.Hex("#1E1E1E"),
+			surface:      ui.Hex("#1E1E1E"),
+			surface2:     ui.Hex("#2D2D2E"),
+			sidebar:      ui.Hex("#252526"),
+			sidebarText:  ui.Hex("#E8E8EA"),
+			sidebarMuted: ui.Hex("#9A9A9E"),
+			text:         ui.Hex("#E8E8EA"),
+			body:         ui.Hex("#CFCFD2"),
+			muted:        ui.Hex("#A0A0A5"),
+			faint:        ui.Hex("#7C7C82"),
+			hairline:     ui.Hex("#3A3A3C"),
+			borderStrong: ui.Hex("#4C4C50"),
+			blue:         ui.Hex("#0A84FF"),
+			blueSoft:     ui.Hex("#0B2E4F"),
+			recallBg:     ui.Hex("#102A43"),
+			blueLine:     ui.Hex("#1F4E7A"),
+			rust:         ui.Hex("#FF453A"),
+			rustSoft:     ui.Hex("#3A1C1B"),
+			green:        ui.Hex("#30D158"),
+			shadow:       ui.RGBA(0, 0, 0, 0.55),
+			navActive:    ui.Hex("#0A84FF"),
+			navHover:     ui.Hex("#2F2F31"),
+			navLine:      ui.Hex("#3A3A3C"),
+			fieldBg:      ui.Hex("#2C2C2E"),
 		}
 	}
 	return palette{
-		canvas:         ui.Hex("#F5F5F5"),
-		surface:        ui.Hex("#FFFFFF"),
-		surface2:       ui.Hex("#FAFAFA"),
-		sidebar:        ui.Hex("#F5F5F5"),
-		sidebarText:    ui.Hex("#1A1A1A"),
-		sidebarMuted:   ui.Hex("#7A7A7A"),
-		text:           ui.Hex("#1A1A1A"),
-		body:           ui.Hex("#3A3A3A"),
-		muted:          ui.Hex("#6F6F6F"),
-		faint:          ui.Hex("#8C8C8C"),
-		hairline:       ui.Hex("#E6E6E6"),
-		borderStrong:   ui.Hex("#D2D2D2"),
-		blue:           ui.Hex("#C2410C"),
-		blueSoft:       ui.Hex("#FFF4ED"),
-		blueLine:       ui.Hex("#FED7AA"),
-		rust:           ui.Hex("#B42318"),
-		green:          ui.Hex("#16A34A"),
-		rustSoft:       ui.Hex("#FEF3F2"),
-		shadow:         ui.RGBA(17, 17, 17, 0.05),
-		navActive:      ui.Hex("#ECECEC"),
-		navHover:       ui.Hex("#F1F1F1"),
-		navLine:        ui.Hex("#E6E6E6"),
-		fieldBg:        ui.Hex("#F5F5F5"),
-		composerBg:     ui.Hex("#FFFFFF"),
-		composerText:   ui.Hex("#1A1A1A"),
-		composerMuted:  ui.Hex("#6F6F6F"),
-		composerLine:   ui.Hex("#E6E6E6"),
-		composerHover:  ui.Hex("#F5F5F5"),
-		composerCircle: ui.Hex("#1A1A1A"),
-		composerInk:    ui.Hex("#FFFFFF"),
-		composerDanger: ui.Hex("#B42318"),
+		canvas:       ui.Hex("#F5F5F5"),
+		surface:      ui.Hex("#FFFFFF"),
+		surface2:     ui.Hex("#FAFAFA"),
+		sidebar:      ui.Hex("#F5F5F5"),
+		sidebarText:  ui.Hex("#1A1A1A"),
+		sidebarMuted: ui.Hex("#7A7A7A"),
+		text:         ui.Hex("#1A1A1A"),
+		body:         ui.Hex("#3A3A3A"),
+		muted:        ui.Hex("#6F6F6F"),
+		faint:        ui.Hex("#8C8C8C"),
+		hairline:     ui.Hex("#E6E6E6"),
+		borderStrong: ui.Hex("#D2D2D2"),
+		blue:         ui.Hex("#C2410C"),
+		blueSoft:     ui.Hex("#FFF4ED"),
+		blueLine:     ui.Hex("#FED7AA"),
+		rust:         ui.Hex("#B42318"),
+		green:        ui.Hex("#16A34A"),
+		rustSoft:     ui.Hex("#FEF3F2"),
+		shadow:       ui.RGBA(17, 17, 17, 0.05),
+		navActive:    ui.Hex("#ECECEC"),
+		navHover:     ui.Hex("#F1F1F1"),
+		navLine:      ui.Hex("#E6E6E6"),
+		fieldBg:      ui.Hex("#F5F5F5"),
 	}
 }
 
@@ -153,14 +129,14 @@ func appTheme(dark bool) *ui.Theme {
 	t.Accent = p.text
 	t.AccentText = p.canvas
 	if dark {
-		t.Accent = p.text
-		t.AccentText = ui.Hex("#111110")
+		t.Accent = p.blue
+		t.AccentText = ui.Hex("#FFFFFF")
 	} else {
 		t.Accent = p.text
 		t.AccentText = ui.Hex("#F7F6F1")
 	}
-	t.AccentHover = p.text
-	t.AccentPressed = p.text
+	t.AccentHover = withAlpha(t.Accent, 0.9)
+	t.AccentPressed = withAlpha(t.Accent, 0.8)
 	t.Focus = p.blue
 	t.Selection = p.blueSoft
 	t.Danger = p.rust
@@ -201,23 +177,3 @@ func heatStyle(mastery int, dark bool) (ui.Color, ui.Color, ui.Color) {
 }
 
 func withAlpha(c ui.Color, alpha float32) ui.Color { return c.Alpha(alpha) }
-
-// composerTheme keeps the caret and selection legible on the composer surface.
-func composerTheme(base *ui.Theme) *ui.Theme {
-	p := paletteFor(base.Dark)
-	t := appTheme(base.Dark)
-	t.Background = ui.Transparent
-	t.Surface = ui.Transparent
-	t.SurfaceHover = ui.Transparent
-	t.SurfacePressed = ui.Transparent
-	t.Border = p.composerLine
-	t.Text = p.composerText
-	t.TextMuted = p.composerMuted
-	t.Accent = p.composerText
-	t.AccentText = p.composerInk
-	t.Focus = p.composerText
-	t.Selection = withAlpha(p.composerText, 0.24)
-	t.Danger = p.composerDanger
-	t.FontSize = 14
-	return t
-}

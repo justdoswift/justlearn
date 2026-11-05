@@ -8,17 +8,8 @@ import (
 
 func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
-	ui.Column(c).Width(268).FillHeight().Background(p.sidebar).
+	ui.Column(c).Width(280).FillHeight().Background(p.sidebar).
 		BorderWidth(0, 1, 0, 0).BorderColor(p.navLine).Children(func() {
-		bar := c.TitleBar()
-		ui.Row(c).Height(max(bar.Height, 40)).Padding(0, bar.Right+8, 0, bar.Left+8).
-			Gap(6).AlignItems(ui.Center).DragWindow().Children(func() {
-			ui.Box(c).Size(18, 18).Radius(4).Background(p.navActive).Center().Children(func() {
-				ui.Text(c, "✦").FontSize(10).TextColor(p.blue)
-			})
-			ui.Text(c, "JustLearn").FontSize(13).FontWeight(600).TextColor(p.sidebarText)
-		})
-
 		ui.Column(c).Padding(2, 6, 2, 6).Children(func() {
 			ui.SearchField(c, &a.search).FillWidth().Placeholder("搜索节点")
 		})
@@ -58,10 +49,14 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 						row := ui.ButtonBase(c.Key("route:" + g.ID)).Grow(1).Height(26).Radius(radiusBadge).
 							PaddingX(6).Children(func() {
 							ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
+								pct := p.faint
+								if active {
+									pct = p.sidebarText
+								}
 								ui.Text(c, g.Title).FontSize(fsRead).FontWeight(weight).MaxLines(1).
 									TextColor(p.sidebarText)
 								ui.Spacer(c)
-								ui.Textf(c, "%d%%", g.Percent()).FontSize(fsCaption).TextColor(p.faint)
+								ui.Textf(c, "%d%%", g.Percent()).FontSize(fsCaption).TextColor(pct)
 							})
 						})
 						if active {
@@ -69,13 +64,18 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 						} else if row.Hovered() {
 							row.Background(p.navHover)
 						}
+
 						if row.Clicked() {
 							a.selectGoal(g.ID)
 							a.routeNodeID = ""
 						}
+						xColor := p.faint
+						if active {
+							xColor = p.sidebarText
+						}
 						del := ui.ButtonBase(c).Size(18, 18).Radius(radiusBadge).Label("删除路线").
 							Tooltip("删除路线").Center().Children(func() {
-							ui.Text(c, "×").FontSize(11).TextColor(p.faint)
+							ui.Text(c, "×").FontSize(11).TextColor(xColor)
 						})
 						if del.Hovered() {
 							del.Background(p.fieldBg)
@@ -124,18 +124,6 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 					}
 				}
 			})
-		})
-
-		ui.Row(c).Padding(4, 8, 6, 8).Gap(8).AlignItems(ui.Center).Children(func() {
-			settings := ui.ButtonBase(c).Padding(3, 4).Radius(radiusBadge).Children(func() {
-				ui.Text(c, "设置").FontSize(fsCaption).TextColor(p.faint)
-			})
-			if settings.Hovered() {
-				settings.Background(p.navHover)
-			}
-			if settings.Clicked() {
-				a.openSettings()
-			}
 		})
 	})
 }
