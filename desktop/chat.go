@@ -83,19 +83,6 @@ func (a *app) topbar(c *ui.Context, t *ui.Theme) {
 			if a.streaming {
 				ui.Spinner(c)
 			}
-			btn := ui.ButtonBase(c).Padding(4, 7).Radius(4).Children(func() {
-				color := p.muted
-				if a.routeOpen {
-					color = p.text
-				}
-				ui.Text(c, "路线").FontSize(11).TextColor(color)
-			})
-			if a.routeOpen || btn.Hovered() {
-				btn.Background(p.fieldBg)
-			}
-			if btn.Clicked() {
-				a.routeOpen = !a.routeOpen
-			}
 		})
 	})
 }

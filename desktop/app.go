@@ -343,6 +343,20 @@ func (a *app) engineConfig() agent.Config {
 	}
 }
 
+func (a *app) visibleRoutes() []store.Goal {
+	q := strings.ToLower(strings.TrimSpace(a.search))
+	if q == "" {
+		return a.goals
+	}
+	out := make([]store.Goal, 0, len(a.goals))
+	for _, goal := range a.goals {
+		if strings.Contains(strings.ToLower(goal.Title), q) {
+			out = append(out, goal)
+		}
+	}
+	return out
+}
+
 func (a *app) visibleConversations() []store.Conversation {
 	q := strings.ToLower(strings.TrimSpace(a.search))
 	if q == "" {
@@ -398,6 +412,8 @@ func (a *app) reloadForConversation(conv store.Conversation) error {
 		return err
 	}
 	a.messages = messages
+	a.nodes = nil
+	a.current = store.Node{}
 	if conv.GoalID != "" {
 		if goal, err := a.store.Goal(conv.GoalID); err == nil {
 			a.goal = goal

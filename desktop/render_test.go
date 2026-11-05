@@ -87,7 +87,7 @@ func seed(t *testing.T) (*store.Store, *app) {
 		t.Fatal(err)
 	}
 	a.routeOpen = true
-	a.current = current
+	a.current, _ = st.CurrentNode(conv.GoalID)
 	nodes, _ = st.Nodes(conv.GoalID)
 	a.nodes = nodes
 	return st, a
@@ -154,23 +154,26 @@ func TestInteractions(t *testing.T) {
 	if a.settingsOpen {
 		t.Fatal("settings stayed open")
 	}
-	if err := tt.Click("新对话"); err != nil {
+	if err := tt.Click("新路线"); err != nil {
 		t.Fatal(err)
 	}
 	tt.Frame()
 	if len(a.messages) != 0 {
-		t.Fatalf("new conversation has %d messages", len(a.messages))
+		t.Fatalf("new route has %d messages", len(a.messages))
 	}
 	if !tt.HasText("开始一段新的学习") {
 		t.Fatalf("empty state missing: %q", tt.Texts())
 	}
-	// Route panel switch and node selection.
-	if err := tt.Click("SELECT 与过滤"); err != nil {
+	// Switch back to the seeded route from the left list.
+	if err := tt.Click("3 个月掌握数据分析"); err != nil {
 		t.Fatal(err)
 	}
 	tt.Frame()
-	if a.selectedNode().Title != "SELECT 与过滤" {
-		t.Fatalf("selected %q", a.selectedNode().Title)
+	if a.goal.Title != "3 个月掌握数据分析" {
+		t.Fatalf("route not selected: %q", a.goal.Title)
+	}
+	if len(a.messages) == 0 {
+		t.Fatal("route conversation did not load")
 	}
 }
 
@@ -230,33 +233,5 @@ func TestDeleteActiveRouteUI(t *testing.T) {
 	}
 	if a.active.ID == "" {
 		t.Fatal("no active conversation after deleting the active route")
-	}
-}
-
-func TestDeleteConversationUI(t *testing.T) {
-	_, a := seed(t)
-	before := a.active.ID
-	tt := ui.NewTester(a.view, 1440, 900)
-	tt.Frame()
-	if err := tt.Click("删除对话"); err != nil {
-		t.Fatal(err)
-	}
-	tt.Frame()
-	if !tt.HasText("删除这个对话？") {
-		t.Fatalf("confirmation missing: %q", tt.Texts())
-	}
-	if err := tt.Click("删除"); err != nil {
-		t.Fatal(err)
-	}
-	tt.Frame()
-	convs, err := a.store.Conversations()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(convs) != 1 || convs[0].ID == before {
-		t.Fatalf("conversation should be replaced: %+v", convs)
-	}
-	if a.active.ID == "" || a.active.ID == before {
-		t.Fatalf("active conversation not replaced: %+v", a.active)
 	}
 }
