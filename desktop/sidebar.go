@@ -58,24 +58,38 @@ func (a *app) sidebar(c *ui.Context, t *ui.Theme) {
 					ui.Text(c, group.label).FontSize(fsCaption).TextColor(p.faint).
 						Padding(6, 4, 2, 6)
 					for _, conv := range group.items {
-						active := conv.ID == a.active.ID
+						item := conv
+						active := item.ID == a.active.ID
 						weight := 400
 						if active {
 							weight = 600
 						}
-						row := ui.ButtonBase(c.Key(conv.ID)).FillWidth().Height(24).Radius(radiusBadge).
-							PaddingX(6).Justify(ui.Start).Children(func() {
-							ui.Text(c, conv.Title).FontSize(fsUI).FontWeight(weight).
-								TextColor(p.sidebarText).MaxLines(1)
+						wrap := ui.Row(c).FillWidth().Gap(1).AlignItems(ui.Center)
+						wrap.Children(func() {
+							row := ui.ButtonBase(c.Key(item.ID)).Grow(1).Height(24).Radius(radiusBadge).
+								PaddingX(6).Justify(ui.Start).Children(func() {
+								ui.Text(c, item.Title).FontSize(fsUI).FontWeight(weight).
+									TextColor(p.sidebarText).MaxLines(1)
+							})
+							if active {
+								row.Background(p.navActive)
+							} else if row.Hovered() {
+								row.Background(p.navHover)
+							}
+							if row.Clicked() && !a.streaming {
+								a.selectConversation(item.ID)
+							}
+							del := ui.ButtonBase(c).Size(18, 18).Radius(radiusBadge).Label("删除对话").
+								Tooltip("删除对话").Center().Children(func() {
+								ui.Text(c, "×").FontSize(11).TextColor(p.faint)
+							})
+							if del.Hovered() {
+								del.Background(p.fieldBg)
+							}
+							if del.Clicked() {
+								a.askDeleteConversation(item.ID)
+							}
 						})
-						if active {
-							row.Background(p.navActive)
-						} else if row.Hovered() {
-							row.Background(p.navHover)
-						}
-						if row.Clicked() && !a.streaming {
-							a.selectConversation(conv.ID)
-						}
 					}
 				}
 			})

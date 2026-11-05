@@ -47,15 +47,19 @@ type app struct {
 	routeNodeID string
 	routeScroll ui.ScrollState
 
-	settingsOpen  bool
-	modelMenuOpen bool
-	models        []string
-	modelsLoaded  bool
-	modelsLoading bool
-	modelsErr     string
-	formBase      string
-	formModel     string
-	formKey       string
+	settingsOpen     bool
+	confirmRouteOpen bool
+	pendingRouteID   string
+	confirmChatOpen  bool
+	pendingChatID    string
+	modelMenuOpen    bool
+	models           []string
+	modelsLoaded     bool
+	modelsLoading    bool
+	modelsErr        string
+	formBase         string
+	formModel        string
+	formKey          string
 
 	quizChoices map[string]int
 	sendCancel  context.CancelFunc
@@ -204,6 +208,112 @@ func (a *app) attachText() {
 			a.focusDraft = true
 		})
 	}()
+}
+
+func (a *app) askDeleteRoute(id string) {
+	if a.streaming {
+		a.errText = "先停止当前回答，再删除路线。"
+		return
+	}
+	a.pendingRouteID = id
+	a.confirmRouteOpen = true
+	a.confirmChatOpen = false
+}
+
+func (a *app) askDeleteConversation(id string) {
+	if a.streaming {
+		a.errText = "先停止当前回答，再删除对话。"
+		return
+	}
+	a.pendingChatID = id
+	a.confirmChatOpen = true
+	a.confirmRouteOpen = false
+}
+
+func (a *app) deleteRoute(id string) {
+	if id == "" {
+		return
+	}
+	if err := a.store.DeleteRoute(id); err != nil {
+		a.errText = err.Error()
+		a.confirmRouteOpen = false
+		return
+	}
+	a.confirmRouteOpen = false
+	a.pendingRouteID = ""
+	a.routeNodeID = ""
+	activeDeleted := a.active.GoalID == id || a.goal.ID == id
+	goals, _ := a.store.Goals()
+	a.goals = goals
+	if len(goals) == 0 {
+		a.active = store.Conversation{}
+		a.goal = store.Goal{}
+		a.nodes = nil
+		a.current = store.Node{}
+		a.messages = nil
+		a.convs = nil
+		a.newRoute()
+		return
+	}
+	if activeDeleted {
+		a.active = store.Conversation{}
+		a.goal = store.Goal{}
+		a.nodes = nil
+		a.current = store.Node{}
+		a.messages = nil
+		convs, _ := a.store.Conversations()
+		var chosen store.Conversation
+		for _, c := range convs {
+			if c.GoalID == goals[0].ID {
+				chosen = c
+				break
+			}
+		}
+		if chosen.ID == "" {
+			chosen, _ = a.store.CreateConversation(goals[0].ID)
+		}
+		a.active = chosen
+	}
+	_ = a.reloadAll()
+	if a.active.ID == "" {
+		a.selectGoal(a.goals[0].ID)
+	}
+}
+
+func (a *app) deleteConversation(id string) {
+	if id == "" {
+		return
+	}
+	if err := a.store.DeleteConversation(id); err != nil {
+		a.errText = err.Error()
+		a.confirmChatOpen = false
+		return
+	}
+	a.confirmChatOpen = false
+	a.pendingChatID = ""
+	if a.active.ID == id {
+		a.active = store.Conversation{}
+		convs, _ := a.store.Conversations()
+		var chosen store.Conversation
+		for _, c := range convs {
+			if c.GoalID == a.goal.ID {
+				chosen = c
+				break
+			}
+		}
+		if chosen.ID == "" {
+			chosen, _ = a.store.CreateConversation(a.goal.ID)
+		}
+		a.active = chosen
+	}
+	_ = a.reloadAll()
+	if a.active.ID == "" {
+		if len(a.goals) > 0 {
+			a.selectGoal(a.goals[0].ID)
+		} else {
+			a.newRoute()
+		}
+	}
 }
 
 func (a *app) openSettings() {
@@ -459,6 +569,7 @@ func (a *app) view(c *ui.Context) {
 			})
 		})
 		a.settingsDialog(c, t)
+		a.deleteDialogs(c, t)
 	})
 }
 

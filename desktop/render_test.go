@@ -173,3 +173,90 @@ func TestInteractions(t *testing.T) {
 		t.Fatalf("selected %q", a.selectedNode().Title)
 	}
 }
+
+func TestDeleteRouteUI(t *testing.T) {
+	_, a := seed(t)
+	if _, _, err := a.store.CreateRoute("待删除路线"); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.reloadAll(); err != nil {
+		t.Fatal(err)
+	}
+	tt := ui.NewTester(a.view, 1440, 900)
+	tt.Frame()
+	if err := tt.Click("删除路线"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if !tt.HasText("删除这条路线？") {
+		t.Fatalf("confirmation missing: %q", tt.Texts())
+	}
+	if err := tt.Click("删除"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	goals, err := a.store.Goals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(goals) != 1 {
+		t.Fatalf("expected one route left: %+v", goals)
+	}
+	for _, g := range goals {
+		if g.Title == "待删除路线" {
+			t.Fatalf("deleted route still present: %+v", goals)
+		}
+	}
+}
+
+func TestDeleteActiveRouteUI(t *testing.T) {
+	_, a := seed(t)
+	tt := ui.NewTester(a.view, 1440, 900)
+	tt.Frame()
+	if err := tt.Click("删除路线"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if err := tt.Click("删除"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	goals, err := a.store.Goals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(goals) != 1 || goals[0].Title != "新的学习路线" {
+		t.Fatalf("active route should be replaced by a new one: %+v", goals)
+	}
+	if a.active.ID == "" {
+		t.Fatal("no active conversation after deleting the active route")
+	}
+}
+
+func TestDeleteConversationUI(t *testing.T) {
+	_, a := seed(t)
+	before := a.active.ID
+	tt := ui.NewTester(a.view, 1440, 900)
+	tt.Frame()
+	if err := tt.Click("删除对话"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if !tt.HasText("删除这个对话？") {
+		t.Fatalf("confirmation missing: %q", tt.Texts())
+	}
+	if err := tt.Click("删除"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	convs, err := a.store.Conversations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(convs) != 1 || convs[0].ID == before {
+		t.Fatalf("conversation should be replaced: %+v", convs)
+	}
+	if a.active.ID == "" || a.active.ID == before {
+		t.Fatalf("active conversation not replaced: %+v", a.active)
+	}
+}

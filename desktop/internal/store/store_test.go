@@ -56,3 +56,55 @@ func TestSetGoalKeepsProgress(t *testing.T) {
 		t.Fatalf("current %v %v", current.ID, err)
 	}
 }
+
+func TestDeleteRouteAndConversation(t *testing.T) {
+	st, err := Open(filepath.Join(t.TempDir(), "delete.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	if err := st.EnsureSeed(); err != nil {
+		t.Fatal(err)
+	}
+	convs, _ := st.Conversations()
+	goalID := convs[0].GoalID
+	if err := st.SetGoal(goalID, "SQL", "", []StageInput{{Title: "基础", Lessons: []LessonInput{{Title: "A"}, {Title: "B"}}}}); err != nil {
+		t.Fatal(err)
+	}
+	nodes, _ := st.Nodes(goalID)
+	if _, _, err := st.DefineHeatmap(nodes[0].ID, 2, []Cell{{Title: "x"}, {Title: "y"}, {Title: "z"}}, false); err != nil {
+		t.Fatal(err)
+	}
+	convID := convs[0].ID
+	if err := st.AppendMessage(&Message{ConversationID: convID, Role: "assistant", Kind: "text", Text: "hi"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.DeleteRoute(goalID); err != nil {
+		t.Fatal(err)
+	}
+	goals, _ := st.Goals()
+	if len(goals) != 0 {
+		t.Fatalf("goals left: %v", goals)
+	}
+	if convs, _ := st.Conversations(); len(convs) != 0 {
+		t.Fatalf("conversations left: %v", convs)
+	}
+	if msgs, _ := st.Messages(convID); len(msgs) != 0 {
+		t.Fatalf("messages left: %v", msgs)
+	}
+
+	// Conversation deletion keeps the route.
+	_, conv, err := st.CreateRoute("SQL 2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.AppendMessage(&Message{ConversationID: conv.ID, Role: "user", Kind: "text", Text: "hello"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.DeleteConversation(conv.ID); err != nil {
+		t.Fatal(err)
+	}
+	if convs, _ := st.Conversations(); len(convs) != 0 {
+		t.Fatalf("conversation not deleted: %v", convs)
+	}
+}

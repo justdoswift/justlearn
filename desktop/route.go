@@ -44,23 +44,36 @@ func (a *app) routePanel(c *ui.Context, t *ui.Theme) {
 						if active {
 							weight = 600
 						}
-						row := ui.ButtonBase(c.Key("route:" + g.ID)).FillWidth().Height(22).Radius(radiusBadge).
-							PaddingX(6).Children(func() {
-							ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
-								ui.Text(c, g.Title).FontSize(fsCaption).FontWeight(weight).MaxLines(1).TextColor(p.text)
-								ui.Spacer(c)
-								ui.Textf(c, "%d%%", g.Percent()).FontSize(fsCaption).TextColor(p.faint)
+						wrap := ui.Row(c).FillWidth().Gap(2).AlignItems(ui.Center)
+						wrap.Children(func() {
+							row := ui.ButtonBase(c.Key("route:" + g.ID)).Grow(1).Height(22).Radius(radiusBadge).
+								PaddingX(6).Children(func() {
+								ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
+									ui.Text(c, g.Title).FontSize(fsCaption).FontWeight(weight).MaxLines(1).TextColor(p.text)
+									ui.Spacer(c)
+									ui.Textf(c, "%d%%", g.Percent()).FontSize(fsCaption).TextColor(p.faint)
+								})
 							})
+							if active {
+								row.Background(p.navActive)
+							} else if row.Hovered() {
+								row.Background(p.navHover)
+							}
+							if row.Clicked() {
+								a.selectGoal(g.ID)
+								a.routeNodeID = ""
+							}
+							del := ui.ButtonBase(c).Size(18, 18).Radius(radiusBadge).Label("删除路线").
+								Tooltip("删除路线").Center().Children(func() {
+								ui.Text(c, "×").FontSize(11).TextColor(p.faint)
+							})
+							if del.Hovered() {
+								del.Background(p.fieldBg)
+							}
+							if del.Clicked() {
+								a.askDeleteRoute(g.ID)
+							}
 						})
-						if active {
-							row.Background(p.navActive)
-						} else if row.Hovered() {
-							row.Background(p.navHover)
-						}
-						if row.Clicked() {
-							a.selectGoal(g.ID)
-							a.routeNodeID = ""
-						}
 					}
 					newRoute := ui.ButtonBase(c).FillWidth().Height(22).Radius(radiusBadge).
 						PaddingX(6).Justify(ui.Start).Children(func() {

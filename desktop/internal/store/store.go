@@ -681,3 +681,21 @@ func (s *Store) HasNodeCard(conversationID, kind, nodeID string) (bool, error) {
 	}
 	return len(rows.Values) > 0 && asInt(rows.Values[0][0]) > 0, nil
 }
+
+// DeleteRoute removes a route, its nodes and cells, and its conversations and
+// messages.
+func (s *Store) DeleteRoute(goalID string) error {
+	ctx := context.Background()
+	if _, err := s.db.Execute(ctx, `DELETE FROM conversations WHERE goal_id = ?`, goalID); err != nil {
+		return err
+	}
+	_, err := s.db.Execute(ctx, `DELETE FROM goals WHERE id = ?`, goalID)
+	return err
+}
+
+// DeleteConversation removes a conversation and its messages, leaving its
+// route untouched.
+func (s *Store) DeleteConversation(id string) error {
+	_, err := s.db.Execute(context.Background(), `DELETE FROM conversations WHERE id = ?`, id)
+	return err
+}
