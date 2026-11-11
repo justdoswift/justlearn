@@ -138,6 +138,7 @@ desktop/
   internal/store     SQLite 数据层
   internal/agent     流式模型客户端、工具循环、教学提示词
 scripts/release.sh   签名、公证并上传 GitHub Release
+docs/                GitHub Pages 官网与截图
 CHANGELOG.md         应用内更新显示的版本说明
 ```
 
