@@ -57,6 +57,62 @@ func TestSetGoalKeepsProgress(t *testing.T) {
 	}
 }
 
+func TestAbilitiesKeepIdentityAndCellBindings(t *testing.T) {
+	st, err := Open(filepath.Join(t.TempDir(), "abilities.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	if err := st.EnsureSeed(); err != nil {
+		t.Fatal(err)
+	}
+	convs, _ := st.Conversations()
+	goalID := convs[0].GoalID
+	if err := st.SetGoal(goalID, "SQL", "", []StageInput{{Title: "基础", Lessons: []LessonInput{{Title: "A"}, {Title: "B"}}}}); err != nil {
+		t.Fatal(err)
+	}
+	first, err := st.UpsertAbilities(goalID, []AbilityInput{
+		{Title: "数据建模", Description: "旧描述"},
+		{Title: "查询思维"},
+		{Title: "SQL 操作"},
+		{Title: "统计判断"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(first) != 4 {
+		t.Fatalf("abilities = %d, want 4", len(first))
+	}
+	second, err := st.UpsertAbilities(goalID, []AbilityInput{
+		{Title: "数据建模", Description: "新描述"},
+		{Title: "查询思维"},
+		{Title: "SQL 操作"},
+		{Title: "统计判断"},
+		{Title: "结论表达"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(second) != 5 {
+		t.Fatalf("abilities after edit = %d, want 5", len(second))
+	}
+	if second[0].ID != first[0].ID || second[0].Description != "新描述" {
+		t.Fatalf("ability identity was not preserved: before=%+v after=%+v", first[0], second[0])
+	}
+	nodes, _ := st.Nodes(goalID)
+	if _, _, err := st.DefineHeatmap(nodes[0].ID, 2, []Cell{
+		{Title: "主键", AbilityID: first[0].ID},
+		{Title: "外键", AbilityID: first[0].ID},
+		{Title: "索引", AbilityID: first[2].ID},
+	}, false); err != nil {
+		t.Fatal(err)
+	}
+	nodes, _ = st.Nodes(goalID)
+	if nodes[0].Cells[0].AbilityID != first[0].ID || nodes[0].Cells[2].AbilityID != first[2].ID {
+		t.Fatalf("cell ability bindings lost: %+v", nodes[0].Cells)
+	}
+}
+
 func TestDeleteRouteAndConversation(t *testing.T) {
 	st, err := Open(filepath.Join(t.TempDir(), "delete.db"))
 	if err != nil {

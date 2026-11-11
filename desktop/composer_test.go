@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/justdoswift/justlearn/desktop/internal/store"
 
@@ -38,6 +39,7 @@ func TestRenderComposer(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, a := seed(t)
+	a.home = false
 	render := func(name string, prep func()) {
 		prep()
 		savePNG(t, filepath.Join(dir, name+".png"), cropComposer(ui.Render(a.view, 1440, 900, 2)))
@@ -84,7 +86,7 @@ func TestRenderComposer(t *testing.T) {
 	}
 	_ = st.SetSetting("model", "deepseek-v4.1-flash")
 	empty := newApp(st)
-	savePNG(t, filepath.Join(dir, "empty.png"), cropComposer(ui.Render(empty.view, 1440, 900, 2)))
+	savePNG(t, filepath.Join(dir, "empty-home.png"), ui.Render(empty.view, 1440, 900, 2))
 }
 
 func TestRenderComposerDark(t *testing.T) {
@@ -93,12 +95,14 @@ func TestRenderComposerDark(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, a := seed(t)
+	a.home = false
 	tt := ui.NewTester(a.view, 1440, 900)
 	tt.SetScale(2)
 	tt.SetDark(true)
 	render := func(name string, prep func()) {
 		prep()
 		tt.Frame()
+		tt.Advance(350 * time.Millisecond)
 		savePNG(t, filepath.Join(dir, name+".png"), cropComposer(tt.Image()))
 	}
 	render("rest", func() { a.draft = "" })
@@ -130,6 +134,7 @@ func TestRenderComposerDark(t *testing.T) {
 
 func TestRenderModelMenuFull(t *testing.T) {
 	_, a := seed(t)
+	a.home = false
 	a.modelMenuOpen = true
 	a.modelsLoaded = true
 	a.models = []string{"deepseek-v4.1-flash"}

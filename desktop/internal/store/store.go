@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/egoist/mygo/plugins/sqlite"
@@ -48,11 +49,25 @@ type Node struct {
 type Cell struct {
 	ID           string
 	NodeID       string
+	AbilityID    string
 	Title        string
 	Description  string
 	Mastery      int
 	Evidence     int
 	LastEvidence string
+}
+
+type Ability struct {
+	ID          string
+	GoalID      string
+	Seq         int
+	Title       string
+	Description string
+}
+
+type AbilityInput struct {
+	Title       string
+	Description string
 }
 
 type Conversation struct {
@@ -124,7 +139,27 @@ func Open(path string) (*Store, error) {
 			return nil, fmt.Errorf("schema: %w", err)
 		}
 	}
+	if err := s.ensureCellAbilityColumn(); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("schema: %w", err)
+	}
 	return s, nil
+}
+
+// ensureCellAbilityColumn brings an existing development database up to the
+// ability model. It only adds the column; old unlocked cells stay unassigned.
+func (s *Store) ensureCellAbilityColumn() error {
+	rows, err := s.query(context.Background(), `PRAGMA table_info(cells)`)
+	if err != nil {
+		return err
+	}
+	for _, row := range rows.Values {
+		if asString(row[1]) == "ability_id" {
+			return nil
+		}
+	}
+	_, err = s.db.Execute(context.Background(), `ALTER TABLE cells ADD COLUMN ability_id TEXT NOT NULL DEFAULT ''`)
+	return err
 }
 
 func (s *Store) Close() error { return s.db.Close() }
@@ -150,9 +185,18 @@ var schema = []string{
 		heatmap_threshold INTEGER NOT NULL DEFAULT 2
 	)`,
 	`CREATE INDEX IF NOT EXISTS nodes_goal_idx ON nodes(goal_id, seq)`,
+	`CREATE TABLE IF NOT EXISTS abilities (
+		id TEXT PRIMARY KEY,
+		goal_id TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+		seq INTEGER NOT NULL,
+		title TEXT NOT NULL,
+		description TEXT NOT NULL DEFAULT ''
+	)`,
+	`CREATE INDEX IF NOT EXISTS abilities_goal_idx ON abilities(goal_id, seq)`,
 	`CREATE TABLE IF NOT EXISTS cells (
 		id TEXT PRIMARY KEY,
 		node_id TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+		ability_id TEXT NOT NULL DEFAULT '',
 		title TEXT NOT NULL,
 		description TEXT NOT NULL DEFAULT '',
 		mastery INTEGER NOT NULL DEFAULT 0,
@@ -406,15 +450,16 @@ func (s *Store) Nodes(goalID string) ([]Node, error) {
 		})
 	}
 	cellRows, err := s.query(ctx, `
-		SELECT c.id, c.node_id, c.title, c.description, c.mastery, c.evidence, c.last_evidence
+		SELECT c.id, c.node_id, c.ability_id, c.title, c.description, c.mastery, c.evidence, c.last_evidence
 		FROM cells c JOIN nodes n ON n.id = c.node_id WHERE n.goal_id = ? ORDER BY c.created_at, c.rowid`, goalID)
 	if err != nil {
 		return nil, err
 	}
 	byNode := make(map[string][]Cell)
 	for _, row := range cellRows.Values {
-		c := Cell{ID: asString(row[0]), NodeID: asString(row[1]), Title: asString(row[2]),
-			Description: asString(row[3]), Mastery: asInt(row[4]), Evidence: asInt(row[5]), LastEvidence: asString(row[6])}
+		c := Cell{ID: asString(row[0]), NodeID: asString(row[1]), AbilityID: asString(row[2]),
+			Title: asString(row[3]), Description: asString(row[4]), Mastery: asInt(row[5]),
+			Evidence: asInt(row[6]), LastEvidence: asString(row[7])}
 		byNode[c.NodeID] = append(byNode[c.NodeID], c)
 	}
 	for i := range nodes {
@@ -439,6 +484,58 @@ func (s *Store) CurrentNode(goalID string) (Node, error) {
 		}
 	}
 	return Node{}, ErrNotFound
+}
+
+func (s *Store) Abilities(goalID string) ([]Ability, error) {
+	rows, err := s.query(context.Background(), `
+		SELECT id, goal_id, seq, title, description FROM abilities
+		WHERE goal_id = ? ORDER BY seq, rowid`, goalID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Ability, 0, len(rows.Values))
+	for _, row := range rows.Values {
+		out = append(out, Ability{ID: asString(row[0]), GoalID: asString(row[1]),
+			Seq: asInt(row[2]), Title: asString(row[3]), Description: asString(row[4])})
+	}
+	return out, nil
+}
+
+// UpsertAbilities keeps an ability's ID when its title is unchanged, so
+// knowledge cells stay attached across route edits. Abilities not listed are
+// left alone; the product has no delete flow yet.
+func (s *Store) UpsertAbilities(goalID string, inputs []AbilityInput) ([]Ability, error) {
+	ctx := context.Background()
+	existing, err := s.Abilities(goalID)
+	if err != nil {
+		return nil, err
+	}
+	byTitle := make(map[string]Ability, len(existing))
+	for _, ability := range existing {
+		byTitle[ability.Title] = ability
+	}
+	seq := 0
+	for _, input := range inputs {
+		title := strings.TrimSpace(input.Title)
+		if title == "" {
+			continue
+		}
+		seq++
+		desc := strings.TrimSpace(input.Description)
+		if old, ok := byTitle[title]; ok {
+			if _, err := s.db.Execute(ctx,
+				`UPDATE abilities SET seq = ?, description = ? WHERE id = ?`, seq, desc, old.ID); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		if _, err := s.db.Execute(ctx,
+			`INSERT INTO abilities (id,goal_id,seq,title,description) VALUES (?,?,?,?,?)`,
+			newID(), goalID, seq, title, desc); err != nil {
+			return nil, err
+		}
+	}
+	return s.Abilities(goalID)
 }
 
 func (s *Store) SetGoal(goalID, title, level string, stages []StageInput) error {
@@ -554,9 +651,9 @@ func (s *Store) DefineHeatmap(nodeID string, threshold int, cells []Cell, replac
 		cell.ID = newID()
 		cell.NodeID = nodeID
 		if _, err := s.db.Execute(ctx, `
-			INSERT INTO cells (id,node_id,title,description,mastery,evidence,last_evidence,created_at)
-			VALUES (?,?,?,?,0,0,'',?)`,
-			cell.ID, nodeID, cell.Title, cell.Description, now); err != nil {
+			INSERT INTO cells (id,node_id,ability_id,title,description,mastery,evidence,last_evidence,created_at)
+			VALUES (?,?,?,?,?,0,0,'',?)`,
+			cell.ID, nodeID, cell.AbilityID, cell.Title, cell.Description, now); err != nil {
 			return nil, 0, err
 		}
 		out = append(out, cell)
@@ -580,13 +677,14 @@ func (s *Store) Heatmap(nodeID string) (Heatmap, error) {
 		return Heatmap{}, ErrNotFound
 	}
 	h := Heatmap{NodeID: nodeID, Threshold: asInt(rows.Values[0][0])}
-	cellRows, err := s.query(ctx, `SELECT id,node_id,title,description,mastery,evidence,last_evidence FROM cells WHERE node_id = ? ORDER BY rowid`, nodeID)
+	cellRows, err := s.query(ctx, `SELECT id,node_id,ability_id,title,description,mastery,evidence,last_evidence FROM cells WHERE node_id = ? ORDER BY rowid`, nodeID)
 	if err != nil {
 		return Heatmap{}, err
 	}
 	for _, row := range cellRows.Values {
-		h.Cells = append(h.Cells, Cell{ID: asString(row[0]), NodeID: asString(row[1]), Title: asString(row[2]),
-			Description: asString(row[3]), Mastery: asInt(row[4]), Evidence: asInt(row[5]), LastEvidence: asString(row[6])})
+		h.Cells = append(h.Cells, Cell{ID: asString(row[0]), NodeID: asString(row[1]), AbilityID: asString(row[2]),
+			Title: asString(row[3]), Description: asString(row[4]), Mastery: asInt(row[5]), Evidence: asInt(row[6]),
+			LastEvidence: asString(row[7])})
 	}
 	return h, nil
 }
@@ -604,13 +702,14 @@ func (s *Store) UpdateCell(cellID string, mastery int, evidence string) (Cell, e
 		mastery, evidence, cellID); err != nil {
 		return Cell{}, err
 	}
-	rows, err := s.query(ctx, `SELECT id,node_id,title,description,mastery,evidence,last_evidence FROM cells WHERE id = ?`, cellID)
+	rows, err := s.query(ctx, `SELECT id,node_id,ability_id,title,description,mastery,evidence,last_evidence FROM cells WHERE id = ?`, cellID)
 	if err != nil || len(rows.Values) == 0 {
 		return Cell{}, ErrNotFound
 	}
 	row := rows.Values[0]
-	return Cell{ID: asString(row[0]), NodeID: asString(row[1]), Title: asString(row[2]), Description: asString(row[3]),
-		Mastery: asInt(row[4]), Evidence: asInt(row[5]), LastEvidence: asString(row[6])}, nil
+	return Cell{ID: asString(row[0]), NodeID: asString(row[1]), AbilityID: asString(row[2]),
+		Title: asString(row[3]), Description: asString(row[4]), Mastery: asInt(row[5]), Evidence: asInt(row[6]),
+		LastEvidence: asString(row[7])}, nil
 }
 
 func (s *Store) AdvanceNode(goalID string) (Node, Node, error) {
