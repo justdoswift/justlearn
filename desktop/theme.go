@@ -1,6 +1,9 @@
 package main
 
-import "github.com/egoist/mygo/ui"
+import (
+	"github.com/egoist/mygo/plugins/glass"
+	"github.com/egoist/mygo/ui"
+)
 
 // Type scale: meta 11 / UI 12 / reading 14 / title 17 / section 20 / display 24.
 const (
@@ -12,45 +15,57 @@ const (
 	fsDisplay float32 = 24
 )
 
-const serifFont = "Songti SC, Noto Serif SC, Source Han Serif SC, Georgia, serif"
+const (
+	readingWidth  float32 = 680
+	settingsWidth float32 = 820
+)
 
-func serif(c *ui.Context, s string) ui.Element {
-	return ui.Text(c, s).Font(serifFont)
+const (
+	radiusPanel   float32 = 20
+	radiusCard    float32 = 12
+	radiusControl float32 = 8
+	radiusBadge   float32 = 6
+)
+
+const (
+	uiFont    = "SF Pro Text, Hiragino Sans GB, PingFang SC, system-ui, sans-serif"
+	serifFont = "Source Han Serif SC VF, Source Han Serif SC, Songti SC, STSong, Georgia, serif"
+	monoFont  = "SF Mono, Menlo, Consolas, monospace"
+)
+
+// composerGlass keeps Liquid Glass's rim and edge, but tints the large input
+// with opaque paper so it does not bloom across the canvas.
+func composerGlass(dark bool) glass.Glass {
+	return glass.Glass{
+		Style:   glass.Regular,
+		Clarity: 0.5,
+		Tint:    paletteFor(dark).composerTint,
+	}
 }
 
-// Shadcn radii: rounded-lg 8 (cards), rounded-md 6 (controls), rounded-sm 4 (badges).
-const (
-	radiusCard    float32 = 8
-	radiusControl float32 = 6
-	radiusBadge   float32 = 4
-)
-
-const (
-	uiFont   = "system-ui"
-	monoFont = "SF Mono, Menlo, Consolas, monospace"
-)
-
 type palette struct {
+	backdropA    ui.Color
+	backdropB    ui.Color
 	canvas       ui.Color
+	composerTint ui.Color
+	panelBg      ui.Color
 	surface      ui.Color
 	surface2     ui.Color
-	sidebar      ui.Color
-	sidebarText  ui.Color
-	sidebarMuted ui.Color
 	text         ui.Color
 	body         ui.Color
 	muted        ui.Color
 	faint        ui.Color
 	hairline     ui.Color
 	borderStrong ui.Color
-	blue         ui.Color
-	blueStrong   ui.Color
-	blueSoft     ui.Color
+	accent       ui.Color
+	accentStrong ui.Color
+	accentSoft   ui.Color
 	recallBg     ui.Color
-	blueLine     ui.Color
+	accentLine   ui.Color
 	rust         ui.Color
 	green        ui.Color
 	rustSoft     ui.Color
+	greenSoft    ui.Color
 	shadow       ui.Color
 	navHover     ui.Color
 	navLine      ui.Color
@@ -60,56 +75,61 @@ type palette struct {
 func paletteFor(dark bool) palette {
 	if dark {
 		return palette{
-			canvas:       ui.Hex("#1E1E1E"),
-			surface:      ui.Hex("#1E1E1E"),
-			surface2:     ui.Hex("#2D2D2E"),
-			sidebar:      ui.Hex("#252526"),
-			sidebarText:  ui.Hex("#E8E8EA"),
-			sidebarMuted: ui.Hex("#9A9A9E"),
-			text:         ui.Hex("#E8E8EA"),
-			body:         ui.Hex("#CFCFD2"),
-			muted:        ui.Hex("#A0A0A5"),
-			faint:        ui.Hex("#7C7C82"),
-			hairline:     ui.Hex("#3A3A3C"),
-			borderStrong: ui.Hex("#4C4C50"),
-			blue:         ui.Hex("#0A84FF"),
-			blueStrong:   ui.Hex("#0A6CD6"),
-			blueSoft:     ui.Hex("#0B2E4F"),
-			recallBg:     ui.Hex("#102A43"),
-			blueLine:     ui.Hex("#1F4E7A"),
-			rust:         ui.Hex("#FF453A"),
-			rustSoft:     ui.Hex("#3A1C1B"),
-			green:        ui.Hex("#30D158"),
-			shadow:       ui.RGBA(0, 0, 0, 0.55),
-			navHover:     ui.Hex("#2F2F31"),
-			navLine:      ui.Hex("#3A3A3C"),
-			fieldBg:      ui.Hex("#2C2C2E"),
+			backdropA:    ui.RGBA(24, 25, 22, 0.97),
+			backdropB:    ui.RGBA(33, 34, 29, 0.97),
+			canvas:       ui.Hex("#171815"),
+			composerTint: ui.Hex("#25261F"),
+			panelBg:      ui.Hex("#25261F"),
+			surface:      ui.RGBA(242, 240, 233, 0.035),
+			surface2:     ui.RGBA(242, 240, 233, 0.06),
+			text:         ui.Hex("#F2F0E9"),
+			body:         ui.Hex("#D3D1C7"),
+			muted:        ui.Hex("#A5A69B"),
+			faint:        ui.Hex("#808177"),
+			hairline:     ui.RGBA(242, 240, 233, 0.11),
+			borderStrong: ui.RGBA(242, 240, 233, 0.20),
+			accent:       ui.Hex("#93CDB8"),
+			accentStrong: ui.Hex("#2F6B57"),
+			accentSoft:   ui.RGBA(147, 205, 184, 0.14),
+			recallBg:     ui.RGBA(147, 205, 184, 0.075),
+			accentLine:   ui.RGBA(147, 205, 184, 0.38),
+			rust:         ui.Hex("#FF8F78"),
+			rustSoft:     ui.RGBA(255, 143, 120, 0.13),
+			green:        ui.Hex("#79D49B"),
+			greenSoft:    ui.RGBA(121, 212, 155, 0.11),
+			shadow:       ui.RGBA(10, 12, 9, 0.55),
+			navHover:     ui.RGBA(242, 240, 233, 0.09),
+			navLine:      ui.RGBA(242, 240, 233, 0.08),
+			fieldBg:      ui.RGBA(242, 240, 233, 0.07),
 		}
 	}
 	return palette{
-		canvas:       ui.Hex("#F5F5F5"),
-		surface:      ui.Hex("#FFFFFF"),
-		surface2:     ui.Hex("#FAFAFA"),
-		sidebar:      ui.Hex("#F5F5F5"),
-		sidebarText:  ui.Hex("#1A1A1A"),
-		sidebarMuted: ui.Hex("#7A7A7A"),
-		text:         ui.Hex("#1A1A1A"),
-		body:         ui.Hex("#3A3A3A"),
-		muted:        ui.Hex("#6F6F6F"),
-		faint:        ui.Hex("#8C8C8C"),
-		hairline:     ui.Hex("#E6E6E6"),
-		borderStrong: ui.Hex("#D2D2D2"),
-		blue:         ui.Hex("#C2410C"),
-		blueStrong:   ui.Hex("#9A3412"),
-		blueSoft:     ui.Hex("#FFF4ED"),
-		blueLine:     ui.Hex("#FED7AA"),
-		rust:         ui.Hex("#B42318"),
-		green:        ui.Hex("#16A34A"),
-		rustSoft:     ui.Hex("#FEF3F2"),
-		shadow:       ui.RGBA(17, 17, 17, 0.05),
-		navHover:     ui.Hex("#F1F1F1"),
-		navLine:      ui.Hex("#E6E6E6"),
-		fieldBg:      ui.Hex("#F5F5F5"),
+		backdropA:    ui.RGBA(247, 245, 239, 0.96),
+		backdropB:    ui.RGBA(237, 235, 227, 0.96),
+		canvas:       ui.Hex("#F3F1EB"),
+		composerTint: ui.Hex("#FBFAF6"),
+		panelBg:      ui.Hex("#FBFAF6"),
+		surface:      ui.RGBA(255, 255, 255, 0.42),
+		surface2:     ui.RGBA(255, 255, 255, 0.6),
+		text:         ui.Hex("#1E1E1A"),
+		body:         ui.Hex("#3C3C36"),
+		muted:        ui.Hex("#6D6E64"),
+		faint:        ui.Hex("#8E8F84"),
+		hairline:     ui.RGBA(30, 30, 26, 0.10),
+		borderStrong: ui.RGBA(30, 30, 26, 0.18),
+		accent:       ui.Hex("#2F6B57"),
+		accentStrong: ui.Hex("#275846"),
+		accentSoft:   ui.RGBA(47, 107, 87, 0.12),
+		recallBg:     ui.RGBA(47, 107, 87, 0.065),
+		accentLine:   ui.RGBA(47, 107, 87, 0.36),
+		rust:         ui.Hex("#B4472F"),
+		rustSoft:     ui.RGBA(180, 71, 47, 0.09),
+		green:        ui.Hex("#2B7A4B"),
+		greenSoft:    ui.RGBA(43, 122, 75, 0.10),
+		shadow:       ui.RGBA(39, 35, 25, 0.16),
+		navHover:     ui.RGBA(30, 30, 26, 0.06),
+		navLine:      ui.RGBA(30, 30, 26, 0.08),
+		fieldBg:      ui.RGBA(255, 255, 255, 0.62),
 	}
 }
 
@@ -126,23 +146,16 @@ func appTheme(dark bool) *ui.Theme {
 	t.Border = p.hairline
 	t.Text = p.text
 	t.TextMuted = p.muted
-	t.Accent = p.text
-	t.AccentText = p.canvas
-	if dark {
-		t.Accent = p.blue
-		t.AccentText = ui.Hex("#FFFFFF")
-	} else {
-		t.Accent = p.text
-		t.AccentText = ui.Hex("#F7F6F1")
-	}
+	t.Accent = p.accent
+	t.AccentText = ui.Hex("#FFFFFF")
 	t.AccentHover = withAlpha(t.Accent, 0.9)
 	t.AccentPressed = withAlpha(t.Accent, 0.8)
-	t.Focus = p.blue
-	t.Selection = p.blueSoft
+	t.Focus = p.accent
+	t.Selection = p.accentSoft
 	t.Danger = p.rust
 	t.FontSize = fsUI
 	t.Font = uiFont
-	t.Radius = 8
+	t.Radius = 10
 	t.Spacing = 4
 	t.Scrollbar = p.borderStrong
 	t.ScrollbarWidth = 6
@@ -150,29 +163,30 @@ func appTheme(dark bool) *ui.Theme {
 }
 
 // heatStyle returns the fill, border and text colors of a mastery tile.
+// Mastery reads as one jade scale so the heatmap follows the app's single
+// accent instead of introducing another hue.
 func heatStyle(mastery int, dark bool) (ui.Color, ui.Color, ui.Color) {
-	p := paletteFor(dark)
+	if dark {
+		switch mastery {
+		case 1:
+			return ui.RGBA(147, 205, 184, 0.26), ui.RGBA(147, 205, 184, 0.36), ui.Hex("#BDE5D7")
+		case 2:
+			return ui.RGBA(147, 205, 184, 0.36), ui.RGBA(147, 205, 184, 0.55), ui.Hex("#E6F7F1")
+		case 3:
+			return ui.Hex("#2F6B57"), ui.Hex("#93CDB8"), ui.Hex("#FFFFFF")
+		default:
+			return ui.RGBA(242, 240, 233, 0.15), ui.RGBA(242, 240, 233, 0.20), ui.Hex("#8A8B80")
+		}
+	}
 	switch mastery {
 	case 1:
-		if dark {
-			return ui.Hex("#442A1B"), ui.Hex("#6B4226"), ui.Hex("#F8C9A8")
-		}
-		return ui.Hex("#FCE7D6"), ui.Hex("#F5C7A5"), ui.Hex("#9A3412")
+		return ui.RGBA(47, 107, 87, 0.30), ui.RGBA(47, 107, 87, 0.42), ui.Hex("#2F6B57")
 	case 2:
-		if dark {
-			return ui.Hex("#8A4B24"), ui.Hex("#A65D2E"), ui.Hex("#FBE0C8")
-		}
-		return ui.Hex("#F5B48A"), ui.Hex("#EA9A6A"), ui.Hex("#7C2D12")
+		return ui.RGBA(47, 107, 87, 0.44), ui.RGBA(47, 107, 87, 0.55), ui.Hex("#1F4E3E")
 	case 3:
-		if dark {
-			return ui.Hex("#EA580C"), ui.Hex("#EA580C"), ui.Hex("#FFFFFF")
-		}
-		return p.blue, p.blue, ui.Hex("#FFFFFF")
+		return ui.Hex("#2F6B57"), ui.Hex("#275846"), ui.Hex("#FFFFFF")
 	default:
-		if dark {
-			return ui.Hex("#242424"), ui.Hex("#333333"), ui.Hex("#8A8A8A")
-		}
-		return ui.Hex("#ECECEC"), ui.Hex("#DCDCDC"), ui.Hex("#8C8C8C")
+		return ui.RGBA(30, 30, 26, 0.15), ui.RGBA(30, 30, 26, 0.20), ui.Hex("#8E8F84")
 	}
 }
 

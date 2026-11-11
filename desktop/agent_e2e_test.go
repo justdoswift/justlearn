@@ -75,6 +75,14 @@ func TestAgentLive(t *testing.T) {
 	if goal.Title == "新的学习路线" || len(nodes) < 2 {
 		t.Fatalf("route not created: goal=%q nodes=%d", goal.Title, len(nodes))
 	}
+	abilities, _ := st.Abilities(conv.GoalID)
+	if len(abilities) < 4 || len(abilities) > 6 {
+		t.Fatalf("abilities not defined: %d", len(abilities))
+	}
+	abilityIDs := map[string]bool{}
+	for _, ability := range abilities {
+		abilityIDs[ability.ID] = true
+	}
 
 	// Start the first node; allow one diagnostic answer before the heatmap.
 	var current store.Node
@@ -90,5 +98,10 @@ func TestAgentLive(t *testing.T) {
 	}
 	if len(current.Cells) < 3 {
 		t.Fatalf("heatmap not defined: %d cells", len(current.Cells))
+	}
+	for _, cell := range current.Cells {
+		if !abilityIDs[cell.AbilityID] {
+			t.Fatalf("cell %q has no valid ability: %q", cell.Title, cell.AbilityID)
+		}
 	}
 }

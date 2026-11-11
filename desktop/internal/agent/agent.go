@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/justdoswift/justlearn/desktop/internal/genui"
 	"github.com/justdoswift/justlearn/desktop/internal/store"
 )
 
@@ -138,6 +139,13 @@ func historyMessages(history []store.Message) []chatMessage {
 				}
 			}
 			out = append(out, chatMessage{Role: "assistant", Content: b.String()})
+		case "ui":
+			var payload genui.Payload
+			if err := json.Unmarshal([]byte(msg.Payload), &payload); err == nil {
+				if text := genui.Flatten(payload); text != "" {
+					out = append(out, chatMessage{Role: "assistant", Content: text})
+				}
+			}
 		default:
 			if msg.Role == "user" || msg.Role == "assistant" {
 				if strings.TrimSpace(msg.Text) != "" {

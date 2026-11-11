@@ -24,13 +24,14 @@ type app struct {
 	engine *agent.Engine
 	win    *mygo.Window
 
-	goals    []store.Goal
-	convs    []store.Conversation
-	active   store.Conversation
-	goal     store.Goal
-	nodes    []store.Node
-	current  store.Node
-	currents map[string]string
+	goals     []store.Goal
+	convs     []store.Conversation
+	active    store.Conversation
+	goal      store.Goal
+	nodes     []store.Node
+	abilities []store.Ability
+	current   store.Node
+	currents  map[string]string
 
 	messages   []store.Message
 	streaming  bool
@@ -42,12 +43,28 @@ type app struct {
 	chatList   ui.ListState
 	composer   ui.Handle
 	focusDraft bool
+	// chatScrollToEnd asks the next chat frame to scroll from the view,
+	// where ListState.ScrollToEnd applies.
+	chatScrollToEnd bool
 
-	routeOpen   bool
-	routeNodeID string
-	routeScroll ui.ScrollState
+	home          bool
+	railSelected  int
+	railShown     float32
+	heatShown     float32
+	heatHover     int
+	heatCardShown float32
+
+	panelOpen  bool
+	panelShown float32
 
 	settingsOpen     bool
+	settingsShown    float32
+	settingsSection  int
+	settingsSaved    bool
+	appearance       string
+	dark             bool
+	systemDark       bool
+	version          string
 	search           string
 	confirmRouteOpen bool
 	pendingRouteID   string
@@ -62,20 +79,40 @@ type app struct {
 	formModel        string
 	formKey          string
 
-	quizChoices map[string]int
-	sendCancel  context.CancelFunc
+	quizChoices  map[string]int
+	flippedCards map[string]bool
+	expandedCode map[string]bool
+	sendCancel   context.CancelFunc
 }
 
 func newApp(st *store.Store) *app {
-	a := &app{store: st, quizChoices: map[string]int{}, routeOpen: true}
+	a := &app{
+		store:        st,
+		quizChoices:  map[string]int{},
+		flippedCards: map[string]bool{},
+		expandedCode: map[string]bool{},
+		appearance:   "system",
+		dark:         true,
+		systemDark:   true,
+		home:         true,
+		railSelected: -1,
+		heatHover:    -1,
+	}
 	a.md = &markdown.Options{ShareSelection: true}
 	a.chatList.FollowEnd = true
 	a.chatList.FollowAnimation = &ui.Smooth
 	a.chatList.Key = func(row int) any {
-		if row < len(a.messages) {
-			return a.messages[row].ID
+		if row == 0 {
+			return "spacer-top"
 		}
-		return "live"
+		msg := row - 1
+		if msg < len(a.messages) {
+			return a.messages[msg].ID
+		}
+		if msg == len(a.messages) && a.streaming {
+			return "live"
+		}
+		return "spacer-bottom"
 	}
 	a.formBase = cfgBaseURL(st)
 	a.formModel = cfgModel(st)
@@ -219,6 +256,7 @@ func (a *app) askDeleteRoute(id string) {
 	a.pendingRouteID = id
 	a.confirmRouteOpen = true
 	a.confirmChatOpen = false
+	a.panelOpen = false
 }
 
 func (a *app) askDeleteConversation(id string) {
@@ -242,7 +280,6 @@ func (a *app) deleteRoute(id string) {
 	}
 	a.confirmRouteOpen = false
 	a.pendingRouteID = ""
-	a.routeNodeID = ""
 	activeDeleted := a.active.GoalID == id || a.goal.ID == id
 	goals, _ := a.store.Goals()
 	a.goals = goals
@@ -250,6 +287,7 @@ func (a *app) deleteRoute(id string) {
 		a.active = store.Conversation{}
 		a.goal = store.Goal{}
 		a.nodes = nil
+		a.abilities = nil
 		a.current = store.Node{}
 		a.messages = nil
 		a.convs = nil
@@ -260,6 +298,7 @@ func (a *app) deleteRoute(id string) {
 		a.active = store.Conversation{}
 		a.goal = store.Goal{}
 		a.nodes = nil
+		a.abilities = nil
 		a.current = store.Node{}
 		a.messages = nil
 		convs, _ := a.store.Conversations()
@@ -317,10 +356,26 @@ func (a *app) deleteConversation(id string) {
 	}
 }
 
+func (a *app) closeSettings() {
+	a.settingsOpen = false
+	a.settingsSaved = false
+	a.focusDraft = true
+}
+
 func (a *app) openSettings() {
+	a.openSettingsAt(0)
+}
+
+func (a *app) openSettingsAt(section int) {
+	a.panelOpen = false
+	a.settingsOpen = true
+	a.settingsSaved = false
+	if section < 0 || section > 2 {
+		section = 0
+	}
+	a.settingsSection = section
 	a.formBase = cfgBaseURL(a.store)
 	a.formModel = cfgModel(a.store)
-	a.settingsOpen = true
 }
 
 func cfgKey(st *store.Store) string {
@@ -427,19 +482,22 @@ func (a *app) reloadForConversation(conv store.Conversation) error {
 	}
 	a.messages = messages
 	a.nodes = nil
+	a.abilities = nil
 	a.current = store.Node{}
+	a.railSelected = -1
+	a.heatHover = -1
+	a.chatScrollToEnd = true
 	if conv.GoalID != "" {
 		if goal, err := a.store.Goal(conv.GoalID); err == nil {
 			a.goal = goal
 			nodes, _ := a.store.Nodes(goal.ID)
 			a.nodes = nodes
+			abilities, _ := a.store.Abilities(goal.ID)
+			a.abilities = abilities
 			if node, err := a.store.CurrentNode(goal.ID); err == nil {
 				a.current = node
 			}
 		}
-	}
-	if a.routeNodeID == "" {
-		a.routeNodeID = a.current.ID
 	}
 	return nil
 }
@@ -448,8 +506,8 @@ func (a *app) selectConversation(id string) {
 	for _, conv := range a.convs {
 		if conv.ID == id {
 			a.active = conv
-			a.routeNodeID = ""
 			_ = a.reloadForConversation(conv)
+			a.home = len(a.messages) == 0 && !a.streaming
 			return
 		}
 	}
@@ -467,13 +525,16 @@ func (a *app) newConversation() {
 	}
 	_ = a.store.TouchConversation(conv.ID)
 	a.active = conv
-	a.routeNodeID = a.current.ID
 	_ = a.reloadAll()
 	a.selectConversation(conv.ID)
+	a.home = true
 	a.focusDraft = true
 }
 
 func (a *app) newRoute() {
+	a.home = true
+	a.panelOpen = false
+	a.modelMenuOpen = false
 	goal, conv, err := a.store.CreateRoute("新的学习路线")
 	if err != nil {
 		a.errText = err.Error()
@@ -481,13 +542,13 @@ func (a *app) newRoute() {
 	}
 	a.goal = goal
 	a.active = conv
-	a.routeNodeID = ""
 	a.nodes = nil
+	a.abilities = nil
 	a.current = store.Node{}
 	a.messages = nil
 	_ = a.reloadAll()
 	a.selectConversation(conv.ID)
-	a.routeOpen = true
+	a.home = true
 	a.focusDraft = true
 }
 
@@ -495,7 +556,6 @@ func (a *app) selectGoal(goalID string) {
 	for _, conv := range a.convs {
 		if conv.GoalID == goalID {
 			a.selectConversation(conv.ID)
-			a.routeNodeID = ""
 			return
 		}
 	}
@@ -505,7 +565,6 @@ func (a *app) selectGoal(goalID string) {
 		return
 	}
 	a.active = conv
-	a.routeNodeID = ""
 	_ = a.reloadAll()
 	a.selectConversation(conv.ID)
 }
@@ -519,10 +578,11 @@ func (a *app) send(text string) {
 		return
 	}
 	if cfgKey(a.store) == "" {
-		a.openSettings()
+		a.openSettingsAt(1)
 		a.errText = "先在设置里填入模型 API Key。"
 		return
 	}
+	a.home = false
 	a.draft = ""
 	a.streaming = true
 	a.streamText = ""
@@ -572,19 +632,6 @@ func (a *app) cancelSend() {
 	}
 }
 
-func (a *app) selectedNode() store.Node {
-	id := a.routeNodeID
-	if id == "" {
-		id = a.current.ID
-	}
-	for _, node := range a.nodes {
-		if node.ID == id {
-			return node
-		}
-	}
-	return a.current
-}
-
 func (a *app) saveSettings() {
 	base := strings.TrimSpace(a.formBase)
 	model := strings.TrimSpace(a.formModel)
@@ -594,25 +641,80 @@ func (a *app) saveSettings() {
 	if key != "" {
 		_ = mygo.Secrets.Set("api-key", []byte(key))
 	}
-	a.settingsOpen = false
+	a.settingsSaved = true
 	a.formKey = ""
 	a.errText = ""
+}
+
+func (a *app) goHome() {
+	a.home = true
+	a.panelOpen = false
+	a.settingsOpen = false
+	a.modelMenuOpen = false
+	a.focusDraft = true
+}
+
+func (a *app) continueChat() {
+	if len(a.messages) == 0 && !a.streaming {
+		return
+	}
+	a.home = false
+	a.focusDraft = true
+	a.chatScrollToEnd = true
+}
+
+// applyAppearance saves and follows the chosen appearance. It is safe in
+// headless tests: only a live window talks to the system theme.
+func (a *app) applyAppearance(value string) {
+	switch value {
+	case "light", "dark":
+	default:
+		value = "system"
+	}
+	a.appearance = value
+	_ = a.store.SetSetting("appearance", value)
+	if a.win != nil {
+		mygo.Theme.SetSource(mygo.ThemeSource(value))
+		a.systemDark = mygo.Theme.IsDark()
+	}
+	switch value {
+	case "light":
+		a.dark = false
+	case "dark":
+		a.dark = true
+	default:
+		a.dark = a.systemDark
+	}
+}
+
+// syncSystemAppearance updates the effective palette after the desktop
+// switches between light and dark.
+func (a *app) syncSystemAppearance() {
+	if a.win != nil {
+		a.systemDark = mygo.Theme.IsDark()
+	}
+	if a.appearance == "" || a.appearance == "system" {
+		a.dark = a.systemDark
+	}
 }
 
 // build 2026-11 — native client.
 
 func (a *app) view(c *ui.Context) {
-	t := appTheme(true)
-	p := paletteFor(t.Dark)
+	t := appTheme(a.dark)
+	p := paletteFor(a.dark)
 	ui.Themed(c, t).Fill().Children(func() {
-		ui.Column(c).Fill().Background(p.canvas).Children(func() {
-			a.toolbar(c, t)
-			ui.Row(c).Fill().Children(func() {
-				a.sidebar(c, t)
-				a.main(c, t)
-			})
+		ui.Box(c).Fill().Gradient(p.backdropA, p.backdropB, 135).Children(func() {
+			a.main(c, t)
 		})
-		a.settingsDialog(c, t)
+		if !a.home && !a.panelOpen && !a.settingsOpen {
+			a.routeRail(c, t)
+		}
+		a.heatPanel(c, t)
+		a.overlayPanel(c, t)
+		// The toolbar sits above the panels so its controls stay reachable.
+		a.toolbar(c, t)
+		a.settingsPage(c, t)
 		a.deleteDialogs(c, t)
 	})
 }
