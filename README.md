@@ -4,6 +4,8 @@ JustLearn 是一个原生桌面的 AI 私人教师：打开就是一个居中的
 
 界面用 Go + [MyGo](https://mygo.egoist.dev) 绘制，不使用 webview。视觉是暖纸 / 深墨底色、玉色强调和衬线课文标题；输入框使用 MyGo `plugins/glass` 的真实 Liquid Glass，其余大面积保持安静。支持跟随系统、浅色和深色。数据保存在本机 SQLite，模型通过任意 OpenAI 兼容接口调用。
 
+[官网](https://justdoswift.github.io/justlearn/) · [设计规范](DESIGN.md)
+
 ![JustLearn 深色首页](docs/screenshot.png)
 
 ![JustLearn 浅色首页](docs/light.png)
