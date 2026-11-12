@@ -104,32 +104,32 @@ func paletteFor(dark bool) palette {
 		}
 	}
 	return palette{
-		backdropA:    ui.RGBA(247, 245, 239, 0.96),
-		backdropB:    ui.RGBA(237, 235, 227, 0.96),
+		backdropA:    ui.Hex("#F2EEE4"),
+		backdropB:    ui.Hex("#E8E3D5"),
 		canvas:       ui.Hex("#F3F1EB"),
-		composerTint: ui.Hex("#FBFAF6"),
-		panelBg:      ui.Hex("#FBFAF6"),
-		surface:      ui.RGBA(255, 255, 255, 0.42),
-		surface2:     ui.RGBA(255, 255, 255, 0.6),
+		composerTint: ui.Hex("#F6F1E5"),
+		panelBg:      ui.Hex("#F8F3E7"),
+		surface:      ui.RGBA(255, 251, 241, 0.34),
+		surface2:     ui.RGBA(255, 251, 241, 0.54),
 		text:         ui.Hex("#1E1E1A"),
 		body:         ui.Hex("#3C3C36"),
 		muted:        ui.Hex("#6D6E64"),
 		faint:        ui.Hex("#8E8F84"),
-		hairline:     ui.RGBA(30, 30, 26, 0.10),
-		borderStrong: ui.RGBA(30, 30, 26, 0.18),
+		hairline:     ui.RGBA(60, 52, 35, 0.12),
+		borderStrong: ui.RGBA(60, 52, 35, 0.20),
 		accent:       ui.Hex("#2F6B57"),
 		accentStrong: ui.Hex("#275846"),
-		accentSoft:   ui.RGBA(47, 107, 87, 0.12),
-		recallBg:     ui.RGBA(47, 107, 87, 0.065),
-		accentLine:   ui.RGBA(47, 107, 87, 0.36),
+		accentSoft:   ui.RGBA(47, 107, 87, 0.10),
+		recallBg:     ui.RGBA(47, 107, 87, 0.06),
+		accentLine:   ui.RGBA(47, 107, 87, 0.34),
 		rust:         ui.Hex("#B4472F"),
 		rustSoft:     ui.RGBA(180, 71, 47, 0.09),
 		green:        ui.Hex("#2B7A4B"),
 		greenSoft:    ui.RGBA(43, 122, 75, 0.10),
-		shadow:       ui.RGBA(39, 35, 25, 0.16),
-		navHover:     ui.RGBA(30, 30, 26, 0.06),
-		navLine:      ui.RGBA(30, 30, 26, 0.08),
-		fieldBg:      ui.RGBA(255, 255, 255, 0.62),
+		shadow:       ui.RGBA(64, 55, 38, 0.16),
+		navHover:     ui.RGBA(60, 52, 35, 0.06),
+		navLine:      ui.RGBA(60, 52, 35, 0.08),
+		fieldBg:      ui.RGBA(255, 251, 241, 0.72),
 	}
 }
 
@@ -186,7 +186,7 @@ func heatStyle(mastery int, dark bool) (ui.Color, ui.Color, ui.Color) {
 	case 3:
 		return ui.Hex("#2F6B57"), ui.Hex("#275846"), ui.Hex("#FFFFFF")
 	default:
-		return ui.RGBA(30, 30, 26, 0.15), ui.RGBA(30, 30, 26, 0.20), ui.Hex("#8E8F84")
+		return ui.RGBA(47, 107, 87, 0.10), ui.RGBA(47, 107, 87, 0.24), ui.Hex("#5F7A6E")
 	}
 }
 

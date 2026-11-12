@@ -17,7 +17,7 @@ const (
 	heatPipSize     float32 = 5
 	heatPipGap      float32 = 2
 	heatMaxPips             = 7
-	heatRestOpacity float32 = 0.62
+	heatRestOpacity float32 = 0.72
 	heatCardWidth   float32 = 220
 	heatCardRight   float32 = 78
 	heatCardHeight  float32 = 152
@@ -171,8 +171,9 @@ func (a *app) heatAbilityRow(c *ui.Context, t *ui.Theme, p palette, heat ability
 		pips := ui.Row(c).Gap(heatPipGap).AlignItems(ui.Center)
 		pips.Children(func() {
 			if len(visible) == 0 {
+				fill, border, _ := heatStyle(0, t.Dark)
 				ui.Box(c).Size(heatPipSize, heatPipSize).Radius(1.5).
-					Background(p.surface).BorderWidth(1).BorderColor(p.hairline)
+					Background(fill).BorderWidth(1).BorderColor(border)
 				return
 			}
 			for _, cell := range visible {

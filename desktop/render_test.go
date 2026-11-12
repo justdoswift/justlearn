@@ -332,8 +332,8 @@ func TestHeatPanelFixedRightFades(t *testing.T) {
 	if field.W != readingWidth {
 		t.Fatalf("heat panel reflowed the composer: width=%v", field.W)
 	}
-	if a.heatShown < 0.58 || a.heatShown > 0.66 {
-		t.Fatalf("heat panel default fade = %v, want about 0.62", a.heatShown)
+	if a.heatShown < 0.68 || a.heatShown > 0.76 {
+		t.Fatalf("heat panel default fade = %v, want about 0.72", a.heatShown)
 	}
 	ability, ok := tt.Find("数据建模")
 	if !ok {
@@ -356,7 +356,7 @@ func TestHeatPanelFixedRightFades(t *testing.T) {
 	tt.Move(420, 420)
 	tt.Frame()
 	tt.Advance(300 * time.Millisecond)
-	if a.heatShown > 0.66 {
+	if a.heatShown > 0.76 {
 		t.Fatalf("heat panel did not fade back after hover: shown=%v", a.heatShown)
 	}
 	if a.heatHover != -1 || a.heatCardShown > 0.01 {

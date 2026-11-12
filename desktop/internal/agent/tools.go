@@ -58,7 +58,7 @@ func Tools() []Tool {
 		}},
 		{Type: "function", Function: ToolFunction{
 			Name:        "set_goal",
-			Description: "保存或更新学习目标和路线。没有路线时按目标生成 2–6 个阶段、每阶段 1–10 个节点；同时定义 4–6 个跨节点的能力维度。",
+			Description: "保存或更新学习目标和路线。没有路线时按目标生成 2–6 个阶段、每阶段 1–10 个节点；同时定义 4–6 个跨节点的能力维度，并为第一节定义 3–9 个知识格子。首次创建路线时 heatmap 必填。",
 			Parameters: schema(map[string]any{
 				"title": str("目标标题"),
 				"level": str("当前基础水平"),
@@ -74,6 +74,14 @@ func Tools() []Tool {
 					"title":       str("能力名，2–6 个汉字，跨节点可迁移"),
 					"description": str("这项能力具体指什么"),
 				}), 4, 6),
+				"heatmap": obj(map[string]any{
+					"threshold": num("掌握阈值", 1, 3),
+					"cells": arr(obj(map[string]any{
+						"title":       str("格子标题，一个可判断的知识侧面"),
+						"description": str("这个格子具体测什么"),
+						"ability":     str("该格子服务的能力名，必须来自本次定义或已有能力"),
+					}), 3, 9),
+				}),
 			}, "title", "stages"),
 		}},
 		{Type: "function", Function: ToolFunction{
@@ -284,6 +292,14 @@ func (t *toolset) execute(ctx context.Context, name, raw string) string {
 				Title       string `json:"title"`
 				Description string `json:"description"`
 			} `json:"abilities"`
+			Heatmap *struct {
+				Threshold int `json:"threshold"`
+				Cells     []struct {
+					Title       string `json:"title"`
+					Description string `json:"description"`
+					Ability     string `json:"ability"`
+				} `json:"cells"`
+			} `json:"heatmap"`
 		}
 		if err := json.Unmarshal([]byte(raw), &args); err != nil {
 			return "参数解析失败：" + err.Error()
@@ -318,6 +334,68 @@ func (t *toolset) execute(ctx context.Context, name, raw string) string {
 		} else if len(existingAbilities) == 0 {
 			return "先定义 4–6 个能力维度：abilities 不能省略。"
 		}
+		existingCells := 0
+		if node, err := t.currentNode(); err == nil {
+			existingCells = len(node.Cells)
+		}
+		if args.Heatmap == nil && existingCells == 0 {
+			return "路线还没有第一节热力图：请在同一个 set_goal 调用里提供 heatmap（threshold + 3–9 个 cells，每个 cell 用 ability 填能力名）。"
+		}
+
+		type initialCell struct {
+			Title       string
+			Description string
+			Ability     string
+		}
+		var initialCells []initialCell
+		heatmapThreshold := 2
+		if args.Heatmap != nil {
+			heatmapThreshold = args.Heatmap.Threshold
+			if heatmapThreshold == 0 {
+				heatmapThreshold = 2
+			}
+			if heatmapThreshold < 1 || heatmapThreshold > 3 {
+				return "热力图阈值要在 1–3 之间。"
+			}
+			allowed := map[string]bool{}
+			var allowedTitles []string
+			addAllowed := func(title string) {
+				title = strings.TrimSpace(title)
+				if title == "" || allowed[title] {
+					return
+				}
+				allowed[title] = true
+				allowedTitles = append(allowedTitles, title)
+			}
+			for _, ability := range existingAbilities {
+				addAllowed(ability.Title)
+			}
+			for _, ability := range abilities {
+				addAllowed(ability.Title)
+			}
+			for _, cell := range args.Heatmap.Cells {
+				title := strings.TrimSpace(cell.Title)
+				if title == "" {
+					continue
+				}
+				ability := strings.TrimSpace(cell.Ability)
+				if ability == "" {
+					return fmt.Sprintf("格子「%s」没有 ability：每个格子都要归属一个能力名。", title)
+				}
+				if !allowed[ability] {
+					return fmt.Sprintf("格子「%s」的 ability「%s」不属于本次路线；可用：%s", title, ability, strings.Join(allowedTitles, "、"))
+				}
+				initialCells = append(initialCells, initialCell{
+					Title:       title,
+					Description: strings.TrimSpace(cell.Description),
+					Ability:     ability,
+				})
+			}
+			if len(initialCells) < 3 || len(initialCells) > 9 {
+				return "第一节热力图要在 3–9 个格子之间。"
+			}
+		}
+
 		if err := t.store.SetGoal(t.goalID, args.Title, args.Level, stages); err != nil {
 			return "保存路线失败：" + err.Error()
 		}
@@ -327,10 +405,44 @@ func (t *toolset) execute(ctx context.Context, name, raw string) string {
 			}
 		}
 		_ = t.store.RenameConversation(t.convID, args.Title, "学习路线")
-		nodes, _ := t.store.Nodes(t.goalID)
 		savedAbilities, _ := t.store.Abilities(t.goalID)
-		return fmt.Sprintf("[tool:set_goal] ok; title=%s; nodes=%d; abilities=%d; %s",
-			args.Title, len(nodes), len(savedAbilities), abilityList(savedAbilities))
+		heatmapCount := 0
+		if len(initialCells) > 0 {
+			byTitle := make(map[string]string, len(savedAbilities))
+			for _, ability := range savedAbilities {
+				byTitle[ability.Title] = ability.ID
+			}
+			cells := make([]store.Cell, 0, len(initialCells))
+			for _, cell := range initialCells {
+				abilityID := byTitle[cell.Ability]
+				if abilityID == "" {
+					return fmt.Sprintf("路线已保存，但找不到能力「%s」。", cell.Ability)
+				}
+				cells = append(cells, store.Cell{
+					Title:       cell.Title,
+					Description: cell.Description,
+					AbilityID:   abilityID,
+				})
+			}
+			node, err := t.currentNode()
+			if err != nil {
+				return "路线已保存，但当前没有可定义热力图的节点。"
+			}
+			inserted, _, err := t.store.DefineHeatmap(node.ID, heatmapThreshold, cells, false)
+			if err != nil {
+				return "路线已保存，但保存第一节热力图失败：" + err.Error()
+			}
+			heatmapCount = len(inserted)
+		} else if node, err := t.currentNode(); err == nil {
+			heatmapCount = len(node.Cells)
+		}
+		nodes, _ := t.store.Nodes(t.goalID)
+		result := fmt.Sprintf("[tool:set_goal] ok; title=%s; nodes=%d; abilities=%d; heatmap=%d; %s",
+			args.Title, len(nodes), len(savedAbilities), heatmapCount, abilityList(savedAbilities))
+		if heatmapCount == 0 {
+			result += "; next=当前节点还没有热力图，请立即调用 define_heatmap（3–9 个格子，每个带 abilityId）"
+		}
+		return result
 
 	case "set_abilities":
 		var args struct {

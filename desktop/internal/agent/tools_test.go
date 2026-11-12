@@ -97,13 +97,24 @@ func TestAbilityToolsBindCellsToAbilities(t *testing.T) {
 		{"title":"SQL 操作","description":"能写出正确的 SQL。"},
 		{"title":"统计判断","description":"能判断数字是否可信。"},
 		{"title":"结论表达","description":"能讲清分析结论。"}
-	]}`
-	if got := tool.execute(context.Background(), "set_goal", withAbilities); !strings.Contains(got, "abilities=5") {
+	],"heatmap":{"threshold":2,"cells":[
+		{"title":"主键","ability":"数据建模"},
+		{"title":"外键","ability":"数据建模"},
+		{"title":"索引","ability":"SQL 操作"}
+	]}}`
+	if got := tool.execute(context.Background(), "set_goal", withAbilities); !strings.Contains(got, "abilities=5") || !strings.Contains(got, "heatmap=3") {
 		t.Fatalf("set_goal with abilities failed: %s", got)
 	}
 	abilities, err := st.Abilities(conv.GoalID)
 	if err != nil || len(abilities) != 5 {
 		t.Fatalf("abilities: %v %d", err, len(abilities))
+	}
+	initial, err := st.Nodes(conv.GoalID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(initial[0].Cells) != 3 || initial[0].Cells[0].AbilityID != abilities[0].ID {
+		t.Fatalf("initial heatmap was not bound to abilities: %+v", initial[0].Cells)
 	}
 
 	withoutAbility := `{"threshold":2,"cells":[{"title":"主键"},{"title":"外键"},{"title":"索引"}]}`
@@ -115,7 +126,7 @@ func TestAbilityToolsBindCellsToAbilities(t *testing.T) {
 		t.Fatalf("cell with an unknown ability should be rejected: %s", got)
 	}
 
-	valid := `{"threshold":2,"cells":[
+	valid := `{"threshold":2,"replace":true,"cells":[
 		{"title":"主键","abilityId":"` + abilities[0].ID + `"},
 		{"title":"外键","abilityId":"` + abilities[0].ID + `"},
 		{"title":"索引","abilityId":"` + abilities[2].ID + `"}
