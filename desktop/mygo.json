@@ -1,7 +1,7 @@
 {
   "name": "JustLearn",
   "identifier": "dev.justlearn.app",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "out": "build",
   "macos": {
     "signingIdentity": "Developer ID Application: Peng Ge (6SUWJ2JVNM)",
