@@ -8,6 +8,7 @@ import (
 	"github.com/justdoswift/justlearn/desktop/internal/store"
 
 	"github.com/egoist/mygo"
+	_ "github.com/egoist/mygo/locales/zh-Hans"
 	"github.com/egoist/mygo/plugins/updater"
 	"github.com/egoist/mygo/plugins/updater/native"
 	"github.com/egoist/mygo/ui"
@@ -15,6 +16,7 @@ import (
 
 func main() {
 	loadDotEnv()
+	mygo.App.SetLanguages("zh-Hans")
 	mygo.Use(native.Plugin)
 	mygo.App.WhenReady(func() {
 		devMode := mygo.IsDev()
