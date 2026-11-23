@@ -47,14 +47,13 @@ func TestRenderDesign(t *testing.T) {
 	light.home = false
 	renderSettled(t, &light, filepath.Join(dir, name+"-chat-light.png"), 1440, 900)
 
-	a.toggleSettingsPanel()
-	renderSettled(t, a, filepath.Join(dir, name+"-blank-settings.png"), 1440, 900)
-	a.closePanel()
-	a.panelShown = 0
+	a.openSettings()
+	renderSettled(t, a, filepath.Join(dir, name+"-settings.png"), 1440, 900)
+	a.closeSettings()
 
 	light.home = false
-	light.toggleSettingsPanel()
-	renderSettled(t, &light, filepath.Join(dir, name+"-blank-settings-light.png"), 1440, 900)
+	light.openSettings()
+	renderSettled(t, &light, filepath.Join(dir, name+"-settings-light.png"), 1440, 900)
 }
 
 func TestRenderStates(t *testing.T) {

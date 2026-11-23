@@ -48,13 +48,7 @@ func formatMessages(t *testing.T) (store.Message, store.Message) {
 		},
 	}
 	lessonData, _ := json.Marshal(lesson)
-	quiz := quizPayload{NodeID: "node-format", Questions: []struct {
-		ID          string   `json:"id"`
-		Prompt      string   `json:"prompt"`
-		Options     []string `json:"options"`
-		AnswerIndex int      `json:"answerIndex"`
-		Explanation string   `json:"explanation"`
-	}{{
+	quiz := quizPayload{NodeID: "node-format", Questions: []quizQuestion{{
 		ID:     "q-format",
 		Prompt: "orders 表中一个用户可有多条订单。要回答「上月有多少复购用户（≥2 单）」，哪段写法最终数的是「人」？",
 		Options: []string{

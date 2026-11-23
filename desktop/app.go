@@ -46,6 +46,9 @@ type app struct {
 	// chatScrollToEnd asks the next chat frame to scroll from the view,
 	// where ListState.ScrollToEnd applies.
 	chatScrollToEnd bool
+	// bottomH is the measured height of the composer stack from the last
+	// frame, so the transcript reserves exactly the room it covers.
+	bottomH float32
 
 	home          bool
 	railSelected  int
@@ -54,8 +57,7 @@ type app struct {
 	heatHover     int
 	heatCardShown float32
 
-	panelOpen  bool
-	panelShown float32
+	navOpen bool
 
 	settingsOpen     bool
 	settingsShown    float32
@@ -65,7 +67,6 @@ type app struct {
 	dark             bool
 	systemDark       bool
 	version          string
-	search           string
 	confirmRouteOpen bool
 	pendingRouteID   string
 	confirmChatOpen  bool
@@ -256,7 +257,7 @@ func (a *app) askDeleteRoute(id string) {
 	a.pendingRouteID = id
 	a.confirmRouteOpen = true
 	a.confirmChatOpen = false
-	a.panelOpen = false
+	a.navOpen = false
 }
 
 func (a *app) askDeleteConversation(id string) {
@@ -267,6 +268,7 @@ func (a *app) askDeleteConversation(id string) {
 	a.pendingChatID = id
 	a.confirmChatOpen = true
 	a.confirmRouteOpen = false
+	a.navOpen = false
 }
 
 func (a *app) deleteRoute(id string) {
@@ -367,7 +369,7 @@ func (a *app) openSettings() {
 }
 
 func (a *app) openSettingsAt(section int) {
-	a.panelOpen = false
+	a.navOpen = false
 	a.settingsOpen = true
 	a.settingsSaved = false
 	if section < 0 || section > 2 {
@@ -396,48 +398,6 @@ func (a *app) engineConfig() agent.Config {
 		UserAgent:     os.Getenv("PI_USER_AGENT"),
 		SessionHeader: os.Getenv("PI_SESSION_HEADER"),
 	}
-}
-
-func (a *app) visibleNodes() []store.Node {
-	q := strings.ToLower(strings.TrimSpace(a.search))
-	if q == "" {
-		return a.nodes
-	}
-	out := make([]store.Node, 0, len(a.nodes))
-	for _, node := range a.nodes {
-		if strings.Contains(strings.ToLower(node.Title), q) {
-			out = append(out, node)
-		}
-	}
-	return out
-}
-
-func (a *app) visibleRoutes() []store.Goal {
-	q := strings.ToLower(strings.TrimSpace(a.search))
-	if q == "" {
-		return a.goals
-	}
-	out := make([]store.Goal, 0, len(a.goals))
-	for _, goal := range a.goals {
-		if strings.Contains(strings.ToLower(goal.Title), q) {
-			out = append(out, goal)
-		}
-	}
-	return out
-}
-
-func (a *app) visibleConversations() []store.Conversation {
-	q := strings.ToLower(strings.TrimSpace(a.search))
-	if q == "" {
-		return a.convs
-	}
-	out := make([]store.Conversation, 0, len(a.convs))
-	for _, conv := range a.convs {
-		if strings.Contains(strings.ToLower(conv.Title), q) {
-			out = append(out, conv)
-		}
-	}
-	return out
 }
 
 func (a *app) reloadAll() error {
@@ -533,7 +493,7 @@ func (a *app) newConversation() {
 
 func (a *app) newRoute() {
 	a.home = true
-	a.panelOpen = false
+	a.navOpen = false
 	a.modelMenuOpen = false
 	goal, conv, err := a.store.CreateRoute("新的学习路线")
 	if err != nil {
@@ -610,7 +570,33 @@ func (a *app) handleEvent(ev agent.Event) {
 			a.messages = append(a.messages, *ev.Message)
 		}
 	case "tool":
-		_ = a.reloadAll()
+		// A tool call only changes the route and the ability profile. It must
+		// not scroll a reader who has moved up the transcript back down, so
+		// this reload leaves the transcript and its place alone.
+		a.reloadRouteState()
+	}
+}
+
+// reloadRouteState refreshes the route and ability data a tool call can
+// change, without touching the transcript or its scroll position.
+func (a *app) reloadRouteState() {
+	if a.goal.ID == "" {
+		return
+	}
+	if goal, err := a.store.Goal(a.goal.ID); err == nil {
+		a.goal = goal
+	}
+	if nodes, err := a.store.Nodes(a.goal.ID); err == nil {
+		a.nodes = nodes
+	}
+	if abilities, err := a.store.Abilities(a.goal.ID); err == nil {
+		a.abilities = abilities
+	}
+	if node, err := a.store.CurrentNode(a.goal.ID); err == nil {
+		a.current = node
+	}
+	if goals, err := a.store.Goals(); err == nil {
+		a.goals = goals
 	}
 }
 
@@ -621,7 +607,12 @@ func (a *app) finishSend(err error) {
 	if err != nil && !errors.Is(err, context.Canceled) {
 		a.errText = err.Error()
 	}
+	// Keep the reader where they are: reloadAll jumps to the end, which is
+	// right for a new conversation and wrong for someone who scrolled up
+	// while the answer streamed.
+	follow := a.chatList.FollowEnd
 	_ = a.reloadAll()
+	a.chatScrollToEnd = follow
 	a.focusDraft = true
 }
 
@@ -648,7 +639,7 @@ func (a *app) saveSettings() {
 
 func (a *app) goHome() {
 	a.home = true
-	a.panelOpen = false
+	a.navOpen = false
 	a.settingsOpen = false
 	a.modelMenuOpen = false
 	a.focusDraft = true
@@ -707,11 +698,10 @@ func (a *app) view(c *ui.Context) {
 		ui.Box(c).Fill().Gradient(p.backdropA, p.backdropB, 135).Children(func() {
 			a.main(c, t)
 		})
-		if !a.home && !a.panelOpen && !a.settingsOpen {
+		if !a.home && !a.settingsOpen {
 			a.routeRail(c, t)
 		}
 		a.heatPanel(c, t)
-		a.overlayPanel(c, t)
 		// The toolbar sits above the panels so its controls stay reachable.
 		a.toolbar(c, t)
 		a.settingsPage(c, t)
@@ -725,17 +715,17 @@ type convGroup struct {
 }
 
 func groupConversations(convs []store.Conversation) []convGroup {
-	now := time.Now()
-	today := now.Truncate(24 * time.Hour)
+	today := dayStart(time.Now())
+	yesterday := today.AddDate(0, 0, -1)
 	week := today.AddDate(0, 0, -7)
 	order := []string{"今天", "昨天", "本周", "更早"}
 	buckets := map[string][]store.Conversation{}
 	for _, conv := range convs {
-		day := conv.UpdatedAt.Local().Truncate(24 * time.Hour)
+		day := dayStart(conv.UpdatedAt)
 		switch {
-		case day.Equal(today):
+		case !day.Before(today):
 			buckets["今天"] = append(buckets["今天"], conv)
-		case day.Equal(today.AddDate(0, 0, -1)):
+		case day.Equal(yesterday):
 			buckets["昨天"] = append(buckets["昨天"], conv)
 		case day.After(week):
 			buckets["本周"] = append(buckets["本周"], conv)

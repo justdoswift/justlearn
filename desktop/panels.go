@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	railLeft      float32 = 16
-	railHitWidth  float32 = 34
-	railItemSize  float32 = 22
-	railTickWidth float32 = 22
+	railLeft      float32 = 18
+	railHitWidth  float32 = 56
+	railItemSize  float32 = 28
+	railTickWidth float32 = 26
+	railTickH     float32 = 4
 	railCardWidth float32 = 296
 	railCardGap   float32 = 10
 )
@@ -23,21 +24,6 @@ var (
 	panelSpring = ui.Animation{Spring: ui.SpringOptions{Duration: 320 * time.Millisecond, Bounce: 0.05}}
 	railSpring  = ui.Animation{Spring: ui.SpringOptions{Duration: 220 * time.Millisecond, Bounce: 0.08}}
 )
-
-func (a *app) toggleSettingsPanel() {
-	if a.panelOpen {
-		a.closePanel()
-		return
-	}
-	a.panelOpen = true
-	a.settingsOpen = false
-	a.modelMenuOpen = false
-}
-
-func (a *app) closePanel() {
-	a.panelOpen = false
-	a.focusDraft = true
-}
 
 type routeStage struct {
 	Title string
@@ -103,18 +89,18 @@ func railTickScale(distance int) float32 {
 	case 0:
 		return 1
 	case 1:
-		return 0.66
+		return 0.74
 	case 2:
-		return 0.42
+		return 0.55
 	default:
-		return 0.24
+		return 0.4
 	}
 }
 
-// routeRail is the roadmap as a quiet vertical rail in the left margin.
-// The ticks form a pyramid around the hovered stage and a preview card
-// floats beside it. It overlays the reading column and never moves the
-// chat or the composer.
+// routeRail is the roadmap as a quiet scale in the left margin. Each stage is
+// one tick: a faint track with the finished part filled, so progress reads
+// without a single label. Hovering a tick floats its preview beside it;
+// clicking pins that preview so it stays while the pointer moves.
 func (a *app) routeRail(c *ui.Context, t *ui.Theme) {
 	stages := routeStages(a.nodes)
 	if len(stages) == 0 {
@@ -124,7 +110,8 @@ func (a *app) routeRail(c *ui.Context, t *ui.Theme) {
 	selected := a.railStageIndex(stages)
 	hovered := -1
 	buttons := make([]ui.Element, len(stages))
-	ticks := make([]ui.Element, len(stages))
+	tracks := make([]ui.Element, len(stages))
+	fills := make([]ui.Element, len(stages))
 
 	ui.Overlay(c, func() {
 		ui.Column(c).Absolute().Left(railLeft).Top(0).Bottom(0).Width(railHitWidth).
@@ -135,8 +122,16 @@ func (a *app) routeRail(c *ui.Context, t *ui.Theme) {
 					Radius(radiusBadge).Justify(ui.Start).KeepFocus().FocusRing(false).
 					Label(railStageLabel(i, stage)).Description(stage.Title)
 				button.Children(func() {
-					ticks[i] = ui.Box(c).Width(railTickWidth).Height(2).Radius(1).
-						TransformOrigin(0, 0.5)
+					// The stage number is what turns a column of dashes into
+					// a scale. Two ticks alone read as a rendering accident.
+					ui.Text(c, twoDigits(i+1)).Width(16).FontSize(9).Font(monoFont).
+						TextColor(withAlpha(p.faint, 0.9))
+					tracks[i] = ui.Box(c).Width(railTickWidth).Height(railTickH).Radius(railTickH / 2).
+						Background(withAlpha(p.faint, 0.34)).TransformOrigin(0, 0.5).Clip()
+					tracks[i].Children(func() {
+						fills[i] = ui.Box(c).Height(railTickH).Radius(railTickH / 2).
+							TransformOrigin(0, 0.5)
+					})
 				})
 				buttons[i] = button
 			}
@@ -155,20 +150,38 @@ func (a *app) routeRail(c *ui.Context, t *ui.Theme) {
 			if distance < 0 {
 				distance = -distance
 			}
-			ticks[i].Background(a.railTickColor(p, stages[i], i == selected)).
-				AnimatePose(ui.Pose{Scale: railTickScale(distance)}, railSpring)
+			done, total := routeProgress(stages[i].Nodes)
+			percent := float32(0)
+			if total > 0 {
+				percent = float32(done) / float32(total)
+			}
+			if percent > 0 && percent < 0.06 {
+				percent = 0.06
+			}
+			fills[i].WidthPercent(percent * 100).
+				Background(a.railTickColor(p, stages[i], i == selected))
+			tracks[i].AnimatePose(ui.Pose{Scale: railTickScale(distance)}, railSpring)
 			if buttons[i].Clicked() {
-				a.railSelected = i
+				if a.railSelected == i {
+					a.railSelected = -1
+				} else {
+					a.railSelected = i
+				}
 				a.focusDraft = false
 			}
 		}
 
+		// The card shows for the hovered stage, or stays pinned on the one
+		// picked from the rail. Clicking a stage used to change nothing
+		// visible, which made the whole rail feel dead.
 		detail := selected
 		anchor := buttons[selected]
 		shown := float32(0)
 		if hovered >= 0 {
 			detail = hovered
 			anchor = buttons[hovered]
+			shown = 1
+		} else if a.railSelected >= 0 {
 			shown = 1
 		}
 		card := a.routeRailCard(c, t, p, stages[detail], detail, len(stages))
@@ -267,60 +280,6 @@ func (a *app) routeRailNode(c *ui.Context, p palette, node store.Node) {
 			TextColor(fg).MaxLines(1)
 		if current {
 			ui.Text(c, "现在").FontSize(8.5).TextColor(p.accent)
-		}
-	})
-}
-
-// overlayPanel is the blank settings sheet. It stays centered and leaves
-// the reading column where it is.
-func (a *app) overlayPanel(c *ui.Context, t *ui.Theme) {
-	p := paletteFor(t.Dark)
-	ui.Overlay(c, func() {
-		back := ui.Row(c).Absolute().Left(0).Top(0).Right(0).Bottom(0).Center()
-		back.Background(ui.RGBA(0, 0, 0, 0.16*a.panelShown))
-		if a.panelOpen {
-			back.Modal()
-		} else if a.panelShown < 0.002 {
-			back.PassThrough()
-		}
-
-		var panel ui.Element
-		back.Children(func() {
-			panel = ui.Column(c).Width(520).Height(360).Radius(24)
-			panel.Background(p.panelBg).BorderWidth(1).BorderColor(p.hairline).
-				Shadow(0, 18, 48, 0, p.shadow).Role(ui.RoleDialog).Label("设置")
-			target := float32(0)
-			if a.panelOpen {
-				target = 1
-			}
-			shown := target
-			if !c.Preferences().ReduceMotion {
-				shown = panel.AnimateTo("settings-panel", target, panelSpring)
-			}
-			a.panelShown = shown
-			s := 0.97 + 0.03*shown
-			panel.Scale(s, s).Opacity(shown).Translate(0, 8*(1-shown))
-			panel.Children(func() {
-				if !a.panelOpen && shown <= 0.002 {
-					return
-				}
-				ui.Row(c).FillWidth().Height(46).Padding(0, 10, 0, 18).
-					AlignItems(ui.Center).Children(func() {
-					ui.Text(c, "设置").FontSize(12).FontWeight(400).TextColor(p.text)
-					ui.Spacer(c)
-					close := iconButton(c, p, iconClose, "关闭")
-					if close.Clicked() {
-						a.closePanel()
-					}
-				})
-				ui.Box(c).FillWidth().Height(1).Background(p.hairline)
-			})
-		})
-		if a.panelOpen && (panel.PressedOutside() || back.OverlayShortcut(0, ui.KeyEscape)) {
-			a.closePanel()
-		}
-		if !a.panelOpen && a.panelShown < 0.002 {
-			back.Hidden(true)
 		}
 	})
 }

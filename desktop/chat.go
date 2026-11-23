@@ -28,15 +28,21 @@ type lessonPayload struct {
 	KeyPoints []string `json:"keyPoints"`
 }
 
+// quizQuestion is one saved question. Chosen is the option the reader
+// picked, -1 while unanswered; it is stored with the message so the answer
+// and its explanation survive a restart.
+type quizQuestion struct {
+	ID          string   `json:"id"`
+	Prompt      string   `json:"prompt"`
+	Options     []string `json:"options"`
+	AnswerIndex int      `json:"answerIndex"`
+	Explanation string   `json:"explanation"`
+	Chosen      int      `json:"chosen"`
+}
+
 type quizPayload struct {
-	NodeID    string `json:"nodeId"`
-	Questions []struct {
-		ID          string   `json:"id"`
-		Prompt      string   `json:"prompt"`
-		Options     []string `json:"options"`
-		AnswerIndex int      `json:"answerIndex"`
-		Explanation string   `json:"explanation"`
-	} `json:"questions"`
+	NodeID    string         `json:"nodeId"`
+	Questions []quizQuestion `json:"questions"`
 }
 
 func (a *app) mdOptions(t *ui.Theme) *markdown.Options {
@@ -75,7 +81,10 @@ func (a *app) mdOptions(t *ui.Theme) *markdown.Options {
 }
 
 func (a *app) main(c *ui.Context, t *ui.Theme) {
-	if c.Shortcut(ui.Cmd, ui.KeyEnter) {
+	// A modal owns the keyboard: Cmd+Enter must not send a draft from under
+	// the settings sheet or a delete confirmation.
+	modal := a.settingsOpen || a.confirmRouteOpen || a.confirmChatOpen
+	if !modal && c.Shortcut(ui.Cmd, ui.KeyEnter) {
 		a.send(a.draft)
 	}
 	if a.home {
@@ -86,7 +95,10 @@ func (a *app) main(c *ui.Context, t *ui.Theme) {
 }
 
 const (
-	chatTopInset    float32 = 16
+	chatTopInset float32 = 16
+	// chatBottomInset is the floor under the composer. The real inset is
+	// measured from the composer's own height each frame so a tall draft or
+	// an error line never lands on top of the last message.
 	chatBottomInset float32 = 168
 )
 
@@ -119,13 +131,15 @@ func (a *app) homeView(c *ui.Context, t *ui.Theme) {
 
 func (a *app) chatView(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
+	inset := a.bottomInset()
 	ui.Box(c).Fill().Children(func() {
 		ui.Column(c).Fill().Padding(0, 0, 0, 0).Children(func() {
-			a.chat(c, t)
+			a.chat(c, t, inset)
 		})
-		ui.Box(c).Absolute().Left(0).Right(0).Bottom(0).Height(chatBottomInset).PassThrough().
+		ui.Box(c).Absolute().Left(0).Right(0).Bottom(0).Height(inset).PassThrough().
 			Material(glass.ScrollEdge{Bottom: true, Background: p.backdropA})
-		ui.Column(c).Absolute().Left(0).Right(0).Bottom(0).AlignItems(ui.Center).
+		var stack ui.Element
+		stack = ui.Column(c).Absolute().Left(0).Right(0).Bottom(0).AlignItems(ui.Center).
 			Padding(0, 24, 12, 24).Children(func() {
 			ui.Column(c).FillWidth().MaxWidth(readingWidth).Gap(8).Children(func() {
 				var modelButton ui.Element
@@ -159,10 +173,25 @@ func (a *app) chatView(c *ui.Context, t *ui.Theme) {
 				})
 			})
 		})
+		// The stack is measured after layout, so the next frame reserves
+		// exactly the room it needs.
+		if h := stack.Bounds().H; h > 0 {
+			a.bottomH = h
+		}
 	})
 }
 
-func (a *app) chat(c *ui.Context, t *ui.Theme) {
+// bottomInset is the room the transcript must leave for the composer stack:
+// the measured height of the model row, the field and any error line, never
+// less than the resting floor.
+func (a *app) bottomInset() float32 {
+	if a.bottomH <= 0 {
+		return chatBottomInset
+	}
+	return a.bottomH + 8
+}
+
+func (a *app) chat(c *ui.Context, t *ui.Theme, inset float32) {
 	if a.chatScrollToEnd {
 		a.chatList.ScrollToEnd()
 		a.chatScrollToEnd = false
@@ -176,7 +205,7 @@ func (a *app) chat(c *ui.Context, t *ui.Theme) {
 		case i == 0:
 			ui.Box(c).FillWidth().Height(chatTopInset)
 		case i == rows-1:
-			ui.Box(c).FillWidth().Height(chatBottomInset)
+			ui.Box(c).FillWidth().Height(inset)
 		default:
 			idx := i - 1
 			if a.streaming && idx == len(a.messages) {
@@ -189,7 +218,7 @@ func (a *app) chat(c *ui.Context, t *ui.Theme) {
 			}
 			a.chatRow(c, t, idx)
 		}
-	}).FillWidth().FillHeight().ScrollbarInsets(chatTopInset, 0, chatBottomInset, 0)
+	}).FillWidth().FillHeight().ScrollbarInsets(chatTopInset, 0, inset, 0)
 }
 
 func (a *app) chatRow(c *ui.Context, t *ui.Theme, i int) {
@@ -320,10 +349,21 @@ func (a *app) quizSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 	p := paletteFor(t.Dark)
 	var payload quizPayload
 	_ = json.Unmarshal([]byte(msg.Payload), &payload)
+	for i := range payload.Questions {
+		if payload.Questions[i].Chosen == 0 && !quizPayloadHasChoice(msg.Payload) {
+			payload.Questions[i].Chosen = -1
+		}
+	}
 	ui.Column(c).FillWidth().Padding(0, 0, 4, 0).Gap(11).Children(func() {
 		a.kicker(c, t, "小测")
 		for qi, q := range payload.Questions {
 			chosen, answered := a.quizChoices[q.ID]
+			// The stored choice is the fallback: a restart clears the map,
+			// and an answered quiz must not come back unanswered.
+			if !answered && q.Chosen >= 0 && q.Chosen < len(q.Options) {
+				chosen, answered = q.Chosen, true
+				a.quizChoices[q.ID] = q.Chosen
+			}
 			ui.Column(c).FillWidth().Gap(6).Children(func() {
 				ui.Textf(c, "%d. %s", qi+1, q.Prompt).FontSize(16).FontWeight(400).
 					LineHeight(1.55).TextColor(p.text)
@@ -332,14 +372,14 @@ func (a *app) quizSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 					correct := answered && oi == q.AnswerIndex
 					wrong := answered && chosen == oi && oi != q.AnswerIndex
 					fg := p.body
-					bg := ui.Transparent
+					bg, border := ui.Transparent, p.hairline
 					codeOption := looksLikeCode(option)
 					if correct {
-						fg, bg = p.green, p.greenSoft
+						fg, bg, border = p.green, p.greenSoft, withAlpha(p.green, 0.45)
 					} else if wrong {
-						fg, bg = p.rust, p.rustSoft
+						fg, bg, border = p.rust, p.rustSoft, withAlpha(p.rust, 0.45)
 					} else if answered {
-						fg = p.faint
+						fg, border = p.faint, withAlpha(p.hairline, 0.5)
 					}
 					trailing, trailingColor := "", p.muted
 					if correct {
@@ -347,20 +387,27 @@ func (a *app) quizSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 					} else if wrong {
 						trailing, trailingColor = "你的选择", p.rust
 					}
+					// An unanswered option is a control: it needs an edge and
+					// a hover, or it reads as text that happens to start
+					// with a letter.
 					opt := ui.ButtonBase(c.Key(q.ID+":opt:"+strconv.Itoa(oi))).FillWidth().
-						Padding(6, 8).Radius(radiusControl).Background(bg)
+						Padding(7, 9).Radius(radiusControl).Background(bg).
+						BorderWidth(1).BorderColor(border).
+						Transition(ui.ElementTransition{Colors: true, Duration: 120 * time.Millisecond})
 					opt.Children(func() {
 						optionContent(c, p, letter, option, codeOption, fg, trailingColor, trailing)
 					})
-					if !answered && !a.streaming && opt.Hovered() {
-						opt.Background(p.navHover)
+					if !answered && !a.streaming {
+						if opt.Hovered() {
+							opt.Background(p.fieldBg).BorderColor(p.accentLine)
+						}
+						if opt.Clicked() {
+							a.quizChoices[q.ID] = oi
+							a.send(fmt.Sprintf("第 %d 题（%s）我选 %s：%s", qi+1, q.Prompt, letter, option))
+						}
 					}
 					if answered {
 						opt.Disabled(true)
-					}
-					if !answered && !a.streaming && opt.Clicked() {
-						a.quizChoices[q.ID] = oi
-						a.send(fmt.Sprintf("第 %d 题（%s）我选 %s：%s", qi+1, q.Prompt, letter, option))
 					}
 				}
 				if answered {
@@ -529,4 +576,38 @@ func (a *app) modelPanel(c *ui.Context, t *ui.Theme, p palette, panel, anchor ui
 			}
 		})
 	})
+}
+
+// saveQuizChoice writes the picked option back into the stored quiz message,
+// so the answer and its explanation are still there after a restart.
+func (a *app) saveQuizChoice(msg store.Message, payload quizPayload, question, choice int) {
+	if question < 0 || question >= len(payload.Questions) {
+		return
+	}
+	payload.Questions[question].Chosen = choice
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	if err := a.store.UpdateMessagePayload(msg.ID, string(data)); err != nil {
+		a.errText = err.Error()
+	}
+}
+
+// quizPayloadHasChoice reports whether the stored payload carries a chosen
+// option at all. Older quizzes have no such field, and decoding them would
+// otherwise read as "option A was picked".
+func quizPayloadHasChoice(raw string) bool {
+	var probe struct {
+		Questions []map[string]any `json:"questions"`
+	}
+	if err := json.Unmarshal([]byte(raw), &probe); err != nil {
+		return false
+	}
+	for _, q := range probe.Questions {
+		if _, ok := q["chosen"]; ok {
+			return true
+		}
+	}
+	return false
 }

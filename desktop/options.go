@@ -89,20 +89,27 @@ func plainOptionText(s string) string {
 
 // optionContent draws one answer row. Quiz and legacy messages share it so
 // the letter column, line height and padding stay identical.
+//
+// The letter sits in its own badge rather than in a bare column: an answer
+// that is only text does not read as something you can press, and the quiz
+// looked like a paragraph with letters in it.
 func optionContent(c *ui.Context, p palette, letter, text string, code bool, fg, trailingColor ui.Color, trailing string) {
-	ui.Row(c).FillWidth().Gap(8).AlignItems(ui.Start).Children(func() {
-		ui.Text(c, letter).Width(18).FontSize(fsCaption).Font(monoFont).
-			TextColor(fg).Padding(1, 0, 0, 0)
+	ui.Row(c).FillWidth().Gap(9).AlignItems(ui.Start).Children(func() {
+		badge := ui.Box(c).Size(20, 20).Radius(radiusBadge).Center().
+			Background(p.fieldBg).BorderWidth(1).BorderColor(p.hairline)
+		badge.Children(func() {
+			ui.Text(c, letter).FontSize(10).Font(monoFont).TextColor(fg)
+		})
 		if code {
 			ui.Text(c, text).Grow(1).MinWidth(0).FontSize(fsUI).Font(monoFont).
-				LineHeight(1.6).TextColor(fg).MaxLines(6)
+				LineHeight(1.6).TextColor(fg).MaxLines(6).Padding(2, 0, 0, 0)
 		} else {
 			ui.Text(c, text).Grow(1).MinWidth(0).FontSize(fsRead).
-				LineHeight(1.55).TextColor(fg).MaxLines(3)
+				LineHeight(1.55).TextColor(fg).MaxLines(3).Padding(1, 0, 0, 0)
 		}
 		if trailing != "" {
 			ui.Text(c, trailing).FontSize(fsCaption).TextColor(trailingColor).
-				Padding(1, 0, 0, 0)
+				Padding(3, 0, 0, 0)
 		}
 	})
 }

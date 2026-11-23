@@ -24,6 +24,7 @@ var (
 	iconSun     = lineIcon(`<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>`)
 	iconMoon    = lineIcon(`<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>`)
 	iconInfo    = lineIcon(`<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>`)
+	iconTrash   = lineIcon(`<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/>`)
 )
 
 // iconButton builds a quiet 28×28 toolbar control.

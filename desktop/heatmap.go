@@ -10,17 +10,17 @@ import (
 )
 
 const (
-	heatRailRight   float32 = 12
-	heatRailWidth   float32 = 54
-	heatRowHeight   float32 = 22
-	heatRowGap      float32 = 7
-	heatPipSize     float32 = 5
-	heatPipGap      float32 = 2
-	heatMaxPips             = 7
-	heatRestOpacity float32 = 0.72
-	heatCardWidth   float32 = 220
-	heatCardRight   float32 = 78
-	heatCardHeight  float32 = 152
+	heatRailRight   float32 = 16
+	heatRailWidth   float32 = 76
+	heatRowHeight   float32 = 26
+	heatRowGap      float32 = 8
+	heatPipSize     float32 = 9
+	heatPipGap      float32 = 3
+	heatMaxPips             = 6
+	heatRestOpacity float32 = 0.78
+	heatCardWidth   float32 = 232
+	heatCardRight   float32 = 100
+	heatCardHeight  float32 = 156
 )
 
 var (
@@ -121,7 +121,7 @@ func abilityLevelLabel(level int) string {
 // counts sit on the canvas; the names and detail live only in the hover card.
 // Rows never expand or overlap; the panel fades back at rest.
 func (a *app) heatPanel(c *ui.Context, t *ui.Theme) {
-	if len(a.abilities) == 0 || a.home || a.panelOpen || a.settingsOpen {
+	if len(a.abilities) == 0 || a.home || a.settingsOpen {
 		return
 	}
 	p := paletteFor(t.Dark)
@@ -135,6 +135,8 @@ func (a *app) heatPanel(c *ui.Context, t *ui.Theme) {
 			Role(ui.RoleGroup).Label("能力热力图")
 		panel.Children(func() {
 			ui.Column(c).Width(heatRailWidth).AlignItems(ui.End).Gap(heatRowGap).Children(func() {
+				ui.Text(c, "能力").FontSize(9).Font(monoFont).
+					TextColor(withAlpha(p.faint, 0.9)).Padding(0, 0, 4, 0)
 				for i := range heats {
 					if a.heatAbilityRow(c, t, p, heats[i]) {
 						hovered = i
@@ -162,27 +164,24 @@ func (a *app) heatAbilityRow(c *ui.Context, t *ui.Theme, p palette, heat ability
 	row := ui.Row(c).Width(heatRailWidth).Height(heatRowHeight).AlignItems(ui.Center).
 		Justify(ui.End).Label(heat.Ability.Title)
 	row.Children(func() {
-		visible := heat.Cells
-		extra := 0
-		if len(visible) > heatMaxPips {
-			extra = len(visible) - heatMaxPips
-			visible = visible[:heatMaxPips]
-		}
+		// Every row draws the same number of slots, so the profile reads as
+		// one grid. Only filling the slots a row happens to have left ragged
+		// right edges that looked like scattered dots rather than a map.
 		pips := ui.Row(c).Gap(heatPipGap).AlignItems(ui.Center)
 		pips.Children(func() {
-			if len(visible) == 0 {
-				fill, border, _ := heatStyle(0, t.Dark)
-				ui.Box(c).Size(heatPipSize, heatPipSize).Radius(1.5).
+			for slot := 0; slot < heatMaxPips; slot++ {
+				if slot >= len(heat.Cells) {
+					// An empty slot is a dashed outline, so a route with no
+					// evidence yet still reads as a profile rather than a
+					// blank margin.
+					ui.Box(c).Size(heatPipSize, heatPipSize).Radius(2).
+						Background(ui.Transparent).BorderWidth(1).
+						BorderColor(withAlpha(p.faint, 0.28))
+					continue
+				}
+				fill, border, _ := heatStyle(heat.Cells[slot].Mastery, t.Dark)
+				ui.Box(c).Size(heatPipSize, heatPipSize).Radius(2).
 					Background(fill).BorderWidth(1).BorderColor(border)
-				return
-			}
-			for _, cell := range visible {
-				fill, border, _ := heatStyle(cell.Mastery, t.Dark)
-				ui.Box(c).Size(heatPipSize, heatPipSize).Radius(1.5).
-					Background(fill).BorderWidth(1).BorderColor(border)
-			}
-			if extra > 0 {
-				ui.Textf(c, "+%d", extra).FontSize(8).Font(monoFont).TextColor(p.faint)
 			}
 		})
 	})

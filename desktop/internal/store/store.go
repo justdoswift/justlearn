@@ -433,6 +433,14 @@ func (s *Store) UpdateMessageText(id, text string) error {
 	return err
 }
 
+// UpdateMessagePayload replaces a message's payload, so a quiz keeps the
+// answer the reader picked. Answers used to live only in memory and were
+// gone after a restart.
+func (s *Store) UpdateMessagePayload(id, payload string) error {
+	_, err := s.db.Execute(context.Background(), `UPDATE messages SET payload = ? WHERE id = ?`, payload, id)
+	return err
+}
+
 func (s *Store) Nodes(goalID string) ([]Node, error) {
 	ctx := context.Background()
 	rows, err := s.query(ctx, `

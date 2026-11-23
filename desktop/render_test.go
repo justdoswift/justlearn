@@ -84,13 +84,7 @@ func seed(t *testing.T) (*store.Store, *app) {
 	payload, _ := json.Marshal(lesson)
 	_ = st.AppendMessage(&store.Message{ConversationID: conv.ID, Role: "assistant", Kind: "lesson",
 		Text: lesson.Title, Payload: string(payload)})
-	quiz := quizPayload{NodeID: nodes[0].ID, Questions: []struct {
-		ID          string   `json:"id"`
-		Prompt      string   `json:"prompt"`
-		Options     []string `json:"options"`
-		AnswerIndex int      `json:"answerIndex"`
-		Explanation string   `json:"explanation"`
-	}{{ID: "q1", Prompt: "选出可以作为主键的字段", Options: []string{"学号", "姓名", "年龄"}, AnswerIndex: 0, Explanation: "学号唯一且稳定。"}}}
+	quiz := quizPayload{NodeID: nodes[0].ID, Questions: []quizQuestion{{ID: "q1", Prompt: "选出可以作为主键的字段", Options: []string{"学号", "姓名", "年龄"}, AnswerIndex: 0, Explanation: "学号唯一且稳定。"}}}
 	qdata, _ := json.Marshal(quiz)
 	_ = st.AppendMessage(&store.Message{ConversationID: conv.ID, Role: "assistant", Kind: "quiz",
 		Text: "小测", Payload: string(qdata)})
@@ -275,26 +269,24 @@ func TestTopRightButtonsOpenPanels(t *testing.T) {
 	_, a := seed(t)
 	tt := ui.NewTester(a.view, 1240, 820)
 	tt.Frame()
-	tc := struct {
-		button string
-		title  string
-	}{"设置", "设置"}
-	if err := tt.Click(tc.button); err != nil {
+	if err := tt.Click("设置"); err != nil {
 		t.Fatal(err)
 	}
 	settle(tt)
-	if !a.panelOpen {
-		t.Fatalf("%s panel did not open", tc.title)
+	if !a.settingsOpen {
+		t.Fatal("the gear did not open the settings page")
 	}
-	if !tt.HasText(tc.title) {
-		t.Fatalf("%s panel title missing", tc.title)
+	for _, want := range []string{"外观", "模型", "关于"} {
+		if !tt.HasText(want) {
+			t.Fatalf("settings page missing %q", want)
+		}
 	}
 	if err := tt.Click("关闭"); err != nil {
 		t.Fatal(err)
 	}
 	settle(tt)
-	if a.panelOpen {
-		t.Fatalf("%s panel did not close", tc.title)
+	if a.settingsOpen {
+		t.Fatal("settings did not close")
 	}
 }
 
@@ -332,8 +324,8 @@ func TestHeatPanelFixedRightFades(t *testing.T) {
 	if field.W != readingWidth {
 		t.Fatalf("heat panel reflowed the composer: width=%v", field.W)
 	}
-	if a.heatShown < 0.68 || a.heatShown > 0.76 {
-		t.Fatalf("heat panel default fade = %v, want about 0.72", a.heatShown)
+	if a.heatShown < heatRestOpacity-0.04 || a.heatShown > heatRestOpacity+0.04 {
+		t.Fatalf("heat panel default fade = %v, want about %v", a.heatShown, heatRestOpacity)
 	}
 	ability, ok := tt.Find("数据建模")
 	if !ok {
@@ -356,7 +348,7 @@ func TestHeatPanelFixedRightFades(t *testing.T) {
 	tt.Move(420, 420)
 	tt.Frame()
 	tt.Advance(300 * time.Millisecond)
-	if a.heatShown > 0.76 {
+	if a.heatShown > heatRestOpacity+0.04 {
 		t.Fatalf("heat panel did not fade back after hover: shown=%v", a.heatShown)
 	}
 	if a.heatHover != -1 || a.heatCardShown > 0.01 {
@@ -377,7 +369,7 @@ func TestAbilityNamesLiveInHoverCard(t *testing.T) {
 	if ability.X < 1000 {
 		t.Fatalf("ability heatmap is not fixed on the right: row=%v", ability)
 	}
-	if ability.W > 60 {
+	if ability.W > heatRailWidth+1 {
 		t.Fatalf("ability row still reserves space for a visible label: %v", ability)
 	}
 	if a.heatCardShown > 0.01 {
@@ -564,7 +556,7 @@ func decorateHeat(t *testing.T, a *app) {
 	}
 }
 
-func TestPanelAnimates(t *testing.T) {
+func TestSettingsAnimates(t *testing.T) {
 	_, a := seed(t)
 	tt := ui.NewTester(a.view, 1240, 820)
 	tt.Frame()
@@ -572,12 +564,12 @@ func TestPanelAnimates(t *testing.T) {
 		t.Fatal(err)
 	}
 	tt.Advance(80 * time.Millisecond)
-	if a.panelShown <= 0.01 || a.panelShown >= 0.99 {
-		t.Fatalf("panel did not animate: shown=%v", a.panelShown)
+	if a.settingsShown <= 0.01 || a.settingsShown >= 0.99 {
+		t.Fatalf("settings did not animate: shown=%v", a.settingsShown)
 	}
 	settle(tt)
-	if a.panelShown < 0.99 {
-		t.Fatalf("panel did not settle: shown=%v", a.panelShown)
+	if a.settingsShown < 0.99 {
+		t.Fatalf("settings did not settle: shown=%v", a.settingsShown)
 	}
 }
 
