@@ -5,17 +5,16 @@ import (
 
 	"github.com/justdoswift/justlearn/desktop/internal/store"
 
-	"github.com/egoist/mygo/plugins/glass"
 	"github.com/egoist/mygo/ui"
 )
 
 const (
 	heatRailRight   float32 = 16
 	heatRailWidth   float32 = 76
-	heatRowHeight   float32 = 26
-	heatRowGap      float32 = 8
-	heatPipSize     float32 = 9
-	heatPipGap      float32 = 3
+	heatRowHeight   float32 = 22
+	heatRowGap      float32 = 9
+	heatPipSize     float32 = 8
+	heatPipGap      float32 = 4
 	heatMaxPips             = 6
 	heatRestOpacity float32 = 0.78
 	heatCardWidth   float32 = 232
@@ -25,7 +24,7 @@ const (
 
 var (
 	heatColor = ui.Animation{Duration: 160 * time.Millisecond, Ease: ui.EaseOut}
-	heatFade  = ui.Animation{Duration: 220 * time.Millisecond, Ease: ui.EaseOut}
+	heatFade  = springHover
 )
 
 // abilityHeat is one transferable ability, not a route node. Cells from any
@@ -134,9 +133,9 @@ func (a *app) heatPanel(c *ui.Context, t *ui.Theme) {
 		panel = ui.Column(c).Width(heatRailWidth).AlignItems(ui.End).
 			Role(ui.RoleGroup).Label("能力热力图")
 		panel.Children(func() {
+			// No heading. The profile is a texture in the margin, not a
+			// titled widget; a caption here turns it into a form.
 			ui.Column(c).Width(heatRailWidth).AlignItems(ui.End).Gap(heatRowGap).Children(func() {
-				ui.Text(c, "能力").FontSize(9).Font(monoFont).
-					TextColor(withAlpha(p.faint, 0.9)).Padding(0, 0, 4, 0)
 				for i := range heats {
 					if a.heatAbilityRow(c, t, p, heats[i]) {
 						hovered = i
@@ -160,6 +159,20 @@ func (a *app) heatPanel(c *ui.Context, t *ui.Theme) {
 	a.heatCard(c, t, p, heats)
 }
 
+// emptyPipAlpha is the weight of a slot with no evidence yet. It has to be
+// visible enough to hold the grid together, and quiet enough not to read as
+// an unfilled form field.
+func emptyPipAlpha(dark bool) float32 {
+	if dark {
+		return 0.30
+	}
+	return 0.26
+}
+
+// heatAbilityRow draws one ability as a single line of evidence marks. The
+// marks carry no border: an outline around every cell is what made the
+// profile read as a row of checkboxes. Mastery is carried by fill alone, so
+// the eye reads a density gradient instead of a form to be filled in.
 func (a *app) heatAbilityRow(c *ui.Context, t *ui.Theme, p palette, heat abilityHeat) bool {
 	row := ui.Row(c).Width(heatRailWidth).Height(heatRowHeight).AlignItems(ui.Center).
 		Justify(ui.End).Label(heat.Ability.Title)
@@ -171,23 +184,21 @@ func (a *app) heatAbilityRow(c *ui.Context, t *ui.Theme, p palette, heat ability
 		pips.Children(func() {
 			for slot := 0; slot < heatMaxPips; slot++ {
 				if slot >= len(heat.Cells) {
-					// An empty slot is a dashed outline, so a route with no
+					// An empty slot is a barely-there mark, so a route with no
 					// evidence yet still reads as a profile rather than a
 					// blank margin.
-					ui.Box(c).Size(heatPipSize, heatPipSize).Radius(2).
-						Background(ui.Transparent).BorderWidth(1).
-						BorderColor(withAlpha(p.faint, 0.28))
+					ui.Box(c).Size(heatPipSize, heatPipSize).Radius(1.5).
+						Background(withAlpha(p.faint, emptyPipAlpha(t.Dark)))
 					continue
 				}
-				fill, border, _ := heatStyle(heat.Cells[slot].Mastery, t.Dark)
-				ui.Box(c).Size(heatPipSize, heatPipSize).Radius(2).
-					Background(fill).BorderWidth(1).BorderColor(border)
+				fill, _, _ := heatStyle(heat.Cells[slot].Mastery, t.Dark)
+				ui.Box(c).Size(heatPipSize, heatPipSize).Radius(1.5).Background(fill)
 			}
 		})
 	})
 	hovered := row.Hovered()
 	if hovered {
-		row.Background(p.surface).Radius(6)
+		row.Background(p.surface).Radius(5)
 	}
 	return hovered
 }
@@ -207,19 +218,20 @@ func (a *app) heatCard(c *ui.Context, t *ui.Theme, p palette, heats []abilityHea
 	ui.Column(c).Absolute().Right(heatCardRight).Top(0).Bottom(0).Width(heatCardWidth).
 		Justify(ui.Center).PassThrough().Children(func() {
 		card := ui.Column(c).Width(heatCardWidth).Height(heatCardHeight).
-			Padding(12, 16).Radius(16).
-			Material(glass.Glass{Style: glass.Regular, Clarity: 0.32, Tint: withAlpha(p.panelBg, 0.92)}).
-			BorderWidth(1).BorderColor(p.hairline).Shadow(0, 12, 28, 0, withAlpha(p.shadow, 0.8)).
+			Padding(13, 16).Radius(16).
+			Material(cardGlass(t.Dark, 0.92)).
+			BorderWidth(1).BorderColor(withAlpha(p.borderStrong, 0.4)).
+			Shadow(0, 14, 34, 0, cardShadow(t.Dark)).
 			Label("能力详情").PassThrough()
 		card.Children(func() {
 			ui.Column(c).FillWidth().Gap(3).Children(func() {
-				ui.Textf(c, "能力 %s / %s", twoDigits(index+1), twoDigits(len(heats))).
-					FontSize(9).Font(monoFont).TextColor(p.faint)
-				ui.Text(c, heat.Ability.Title).FontSize(14).FontWeight(400).
+				styleMono.apply(ui.Textf(c, "能力 %s / %s", twoDigits(index+1), twoDigits(len(heats)))).
+					TextColor(p.faint)
+				styleTitle.apply(ui.Text(c, heat.Ability.Title)).
 					TextColor(p.text).MaxLines(1).Padding(2, 0, 0, 0)
 				if heat.Ability.Description != "" {
-					ui.Text(c, heat.Ability.Description).FontSize(10.5).LineHeight(1.5).
-						TextColor(p.muted).MaxLines(2)
+					ui.Text(c, heat.Ability.Description).FontSize(10.5).LineHeight(1.55).
+						LetterSpacing(trackBody).TextColor(p.muted).MaxLines(2)
 				} else {
 					ui.Text(c, "还没有写下这项能力的具体含义。").FontSize(10.5).
 						LineHeight(1.5).TextColor(p.faint).MaxLines(2)

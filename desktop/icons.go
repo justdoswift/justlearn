@@ -37,5 +37,8 @@ func iconButton(c *ui.Context, p palette, icon *ui.SVG, label string) ui.Element
 	if btn.Hovered() {
 		btn.Background(p.navHover)
 	}
+	// The press answers on pointer-down, not on release: a control that only
+	// reacts when the click completes reads as dead.
+	pressPose(btn, btn.Hovered(), btn.Pressed(), 1)
 	return btn
 }

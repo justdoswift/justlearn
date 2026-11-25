@@ -49,7 +49,7 @@ func (a *app) mdOptions(t *ui.Theme) *markdown.Options {
 	p := paletteFor(t.Dark)
 	theme := markdown.DefaultTheme(t)
 	theme.FontSize = fsRead
-	theme.LineHeight = 1.7
+	theme.LineHeight = 1.72
 	theme.Font = uiFont
 	theme.Text = p.body
 	theme.Muted = p.muted
@@ -109,18 +109,20 @@ func (a *app) homeView(c *ui.Context, t *ui.Theme) {
 		ui.Column(c).Width(readingWidth).AlignItems(ui.Center).Gap(12).Children(func() {
 			ui.Row(c).Gap(6).AlignItems(ui.Center).Children(func() {
 				ui.Text(c, "✦").FontSize(13).TextColor(p.accent)
-				ui.Text(c, "JustLearn").FontSize(13).FontWeight(400).TextColor(p.text)
+				ui.Text(c, "JustLearn").FontSize(13).FontWeight(400).
+					LetterSpacing(trackTitle).TextColor(p.text)
 			})
 			a.composerShell(c, t)
 			if len(a.messages) > 0 && !a.streaming {
 				more := ui.ButtonBase(c).Height(28).PaddingX(8).Radius(radiusControl).
 					Transition(ui.ElementTransition{Colors: true, Duration: 120 * time.Millisecond})
 				more.Children(func() {
-					ui.Text(c, "继续上次 →").FontSize(fsUI).TextColor(p.muted)
+					ui.Text(c, "继续上次 →").FontSize(fsUI).LetterSpacing(trackUI).TextColor(p.muted)
 				})
 				if more.Hovered() {
 					more.Background(p.navHover)
 				}
+				pressPose(more, more.Hovered(), more.Pressed(), 1)
 				if more.Clicked() {
 					a.continueChat()
 				}
@@ -150,7 +152,7 @@ func (a *app) chatView(c *ui.Context, t *ui.Theme) {
 					modelButton.Children(func() {
 						ui.Row(c).Gap(4).AlignItems(ui.Center).Children(func() {
 							ui.Text(c, prettyModel(cfgModel(a.store))).FontSize(fsUI).
-								TextColor(p.muted).MaxLines(1).MaxWidth(240)
+								LetterSpacing(trackUI).TextColor(p.muted).MaxLines(1).MaxWidth(240)
 							ui.Icon(c, iconChevron).Size(10, 10).TextColor(p.faint)
 						})
 					})
@@ -249,7 +251,8 @@ func (a *app) userMessage(c *ui.Context, t *ui.Theme, text string) {
 	ui.Row(c).FillWidth().Children(func() {
 		ui.Box(c).MaxWidth(560).BorderWidth(0, 0, 0, 3).BorderColor(p.accent).
 			Padding(2, 0, 2, 14).Children(func() {
-			ui.Text(c, text).FontSize(fsRead).LineHeight(1.6).TextColor(p.body)
+			ui.Text(c, text).FontSize(fsRead).LineHeight(1.6).
+				LetterSpacing(trackBody).TextColor(p.body)
 		})
 	})
 }
@@ -306,7 +309,7 @@ func (a *app) kicker(c *ui.Context, t *ui.Theme, text string) {
 	p := paletteFor(t.Dark)
 	ui.Row(c).Gap(6).AlignItems(ui.Center).Children(func() {
 		ui.Box(c).Size(5, 5).Radius(2.5).Background(p.accent)
-		ui.Text(c, text).FontSize(fsCaption).Font(monoFont).TextColor(p.muted).MaxLines(1)
+		styleMono.apply(ui.Text(c, text)).TextColor(p.muted).MaxLines(1)
 	})
 }
 
@@ -317,7 +320,7 @@ func (a *app) lessonSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 	ui.Column(c).FillWidth().Padding(0, 0, 4, 0).Gap(12).Children(func() {
 		a.kicker(c, t, payload.Kicker)
 		if payload.Title != "" {
-			ui.Text(c, payload.Title).FontSize(21).Font(serifFont).FontWeight(400).LineHeight(1.35).TextColor(p.text)
+			styleDisplay.apply(ui.Text(c, payload.Title)).TextColor(p.text)
 		}
 		markdown.View(c, payload.Body, a.mdOptions(t)).FillWidth()
 		if payload.Code != "" {
@@ -327,19 +330,24 @@ func (a *app) lessonSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 			ui.Box(c).FillWidth().Background(p.recallBg).Radius(radiusControl).
 				BorderWidth(0, 0, 0, 2).BorderColor(p.accentLine).Padding(9, 11).Children(func() {
 				ui.Column(c).FillWidth().Gap(3).Children(func() {
-					ui.Text(c, "主动回忆").FontSize(fsCaption).FontWeight(400).TextColor(p.accent)
-					ui.Text(c, payload.Recall.Prompt).FontSize(fsRead).FontWeight(400).TextColor(p.text)
-					ui.Text(c, "参考答案："+payload.Recall.Answer).FontSize(fsUI).TextColor(p.muted)
+					ui.Text(c, "主动回忆").FontSize(fsCaption).FontWeight(400).
+						LetterSpacing(trackCaption).TextColor(p.accent)
+					ui.Text(c, payload.Recall.Prompt).FontSize(fsRead).FontWeight(400).
+						LetterSpacing(trackBody).TextColor(p.text)
+					ui.Text(c, "参考答案："+payload.Recall.Answer).FontSize(fsUI).
+						LetterSpacing(trackUI).TextColor(p.muted)
 				})
 			})
 		}
 		if payload.Mnemonic != "" {
-			ui.Text(c, "记："+payload.Mnemonic).FontSize(fsUI).TextColor(p.muted)
+			ui.Text(c, "记："+payload.Mnemonic).FontSize(fsUI).
+				LetterSpacing(trackUI).TextColor(p.muted)
 		}
 		for _, point := range payload.KeyPoints {
 			ui.Row(c).FillWidth().Gap(7).Children(func() {
 				ui.Text(c, "·").FontSize(fsRead).TextColor(p.faint)
-				ui.Text(c, point).FontSize(fsRead).TextColor(p.body).LineHeight(1.55)
+				ui.Text(c, point).FontSize(fsRead).LetterSpacing(trackBody).
+					TextColor(p.body).LineHeight(1.55)
 			})
 		}
 	})
@@ -372,14 +380,21 @@ func (a *app) quizSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 					correct := answered && oi == q.AnswerIndex
 					wrong := answered && chosen == oi && oi != q.AnswerIndex
 					fg := p.body
-					bg, border := ui.Transparent, p.hairline
+					// An unanswered option is a row you can press, not a form
+					// field. It gets a faint fill and no outline; the outline
+					// made the whole quiz read as a form to be filled in.
+					bg := p.surface
+					border := ui.Transparent
 					codeOption := looksLikeCode(option)
 					if correct {
-						fg, bg, border = p.green, p.greenSoft, withAlpha(p.green, 0.45)
+						fg, bg, border = p.green, p.greenSoft, withAlpha(p.green, 0.4)
 					} else if wrong {
-						fg, bg, border = p.rust, p.rustSoft, withAlpha(p.rust, 0.45)
+						fg, bg, border = p.rust, p.rustSoft, withAlpha(p.rust, 0.4)
 					} else if answered {
-						fg, border = p.faint, withAlpha(p.hairline, 0.5)
+						// An option the reader did not pick still has to be
+						// readable: dimming it to faint made the answer key
+						// impossible to compare against.
+						fg, bg = p.muted, ui.Transparent
 					}
 					trailing, trailingColor := "", p.muted
 					if correct {
@@ -399,8 +414,9 @@ func (a *app) quizSection(c *ui.Context, t *ui.Theme, msg store.Message) {
 					})
 					if !answered && !a.streaming {
 						if opt.Hovered() {
-							opt.Background(p.fieldBg).BorderColor(p.accentLine)
+							opt.Background(p.surface2)
 						}
+						pressPose(opt, opt.Hovered(), opt.Pressed(), 1)
 						if opt.Clicked() {
 							a.quizChoices[q.ID] = oi
 							a.send(fmt.Sprintf("第 %d 题（%s）我选 %s：%s", qi+1, q.Prompt, letter, option))
@@ -429,14 +445,23 @@ type composerMatch struct{}
 // composerShell is the same glass field in both states. The shared Match
 // identity lets it fly from the middle of the window to the bottom when
 // the first message starts the conversation.
+//
+// The field is a real material, not a tinted pill: the glass carries the
+// blur and the rim, a bright top edge catches the light the way a raised
+// surface does, and the shadow is soft and wide rather than a hard drop.
 func (a *app) composerShell(c *ui.Context, t *ui.Theme) {
 	p := paletteFor(t.Dark)
 	panel := ui.Column(c).FillWidth().Radius(24).Material(composerGlass(t.Dark)).
-		BorderWidth(1).BorderColor(withAlpha(p.borderStrong, 0.55)).
-		Shadow(0, 6, 16, 0, withAlpha(ui.Hex("#000000"), 0.08)).
+		BorderWidth(1).BorderColor(withAlpha(p.borderStrong, 0.5)).
+		Shadow(0, 8, 22, 0, composerShadow(t.Dark)).
 		Padding(6, 10).
-		Label("输入区").Transition(ui.ElementTransition{Animation: &ui.Snappy, Match: composerMatch{}})
+		Label("输入区").Transition(ui.ElementTransition{Animation: &springSheet, Match: composerMatch{}})
 	panel.Children(func() {
+		// The lit top edge. A single hairline along the top is what makes a
+		// translucent surface read as a solid object catching light; without
+		// it the fill looks like flat paint.
+		ui.Box(c).Absolute().Left(18).Right(18).Top(0).Height(1).PassThrough().
+			Background(withAlpha(ui.Hex("#FFFFFF"), composerEdge(t.Dark)))
 		placeholder := "回答，或继续追问…"
 		if a.home {
 			placeholder = "今天想学点什么？"
@@ -451,6 +476,7 @@ func (a *app) composerShell(c *ui.Context, t *ui.Theme) {
 			if plus.Hovered() {
 				plus.Background(p.navHover)
 			}
+			pressPose(plus, plus.Hovered(), plus.Pressed(), 1)
 			if plus.Clicked() {
 				a.attachText()
 			}
@@ -472,11 +498,6 @@ func (a *app) composerShell(c *ui.Context, t *ui.Theme) {
 				stop.Children(func() {
 					ui.Icon(c, iconStop).Size(9, 9).TextColor(ui.Hex("#FFFFFF"))
 				})
-				pose := ui.Pose{}
-				if stop.Hovered() {
-					pose.Scale = 1.05
-				}
-				stop.AnimatePose(pose, ui.Snappy)
 				if stop.Clicked() {
 					a.cancelSend()
 				}
@@ -490,18 +511,13 @@ func (a *app) composerShell(c *ui.Context, t *ui.Theme) {
 					Material(glass.Glass{Tint: p.accentStrong, Interactive: true}).
 					Label("发送").Tooltip("发送").Center().
 					Transition(ui.ElementTransition{
-						Animation: &ui.Snappy,
-						Enter:     &ui.Motion{Scale: 0.84},
-						Exit:      &ui.Motion{Scale: 0.84},
+						Animation: &springPress,
+						Enter:     &ui.Motion{Scale: 0.9, Opacity: 0},
+						Exit:      &ui.Motion{Scale: 0.9, Opacity: 0},
 					})
 				send.Children(func() {
 					ui.Icon(c, iconArrowUp).Size(12, 12).TextColor(ui.Hex("#FFFFFF"))
 				})
-				pose := ui.Pose{}
-				if send.Hovered() {
-					pose.Scale = 1.05
-				}
-				send.AnimatePose(pose, ui.Snappy)
 				if send.Clicked() {
 					a.send(a.draft)
 				}

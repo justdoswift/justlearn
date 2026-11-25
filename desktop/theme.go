@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/egoist/mygo/plugins/glass"
 	"github.com/egoist/mygo/ui"
 )
@@ -14,6 +16,90 @@ const (
 	fsSection float32 = 20
 	fsDisplay float32 = 24
 )
+
+// Tracking is size-specific, never one value for every size: display text
+// reads too loose as it grows and wants negative tracking, small text wants
+// a little positive tracking to stay legible. CJK sits near zero at reading
+// sizes, so only the Latin display and the tiny mono labels move.
+const (
+	trackDisplay float32 = -0.3
+	trackTitle   float32 = -0.1
+	trackBody    float32 = 0
+	trackUI      float32 = 0.1
+	trackCaption float32 = 0.2
+	trackMono    float32 = 0.5
+)
+
+// typeStyle is one step of the scale: size, weight, leading and tracking
+// chosen together. Hierarchy comes from the set, not from size alone.
+type typeStyle struct {
+	Size     float32
+	Weight   int
+	Leading  float32
+	Tracking float32
+	Font     string
+}
+
+// apply writes the style onto an element. Zero fields are left alone, so a
+// style can inherit the theme's family or weight.
+func (s typeStyle) apply(el ui.Element) ui.Element {
+	el.FontSize(s.Size)
+	if s.Weight > 0 {
+		el.FontWeight(s.Weight)
+	}
+	if s.Leading > 0 {
+		el.LineHeight(s.Leading)
+	}
+	if s.Tracking != 0 {
+		el.LetterSpacing(s.Tracking)
+	}
+	if s.Font != "" {
+		el.Font(s.Font)
+	}
+	return el
+}
+
+var (
+	// The lesson title: large, tight leading, negative tracking.
+	styleDisplay = typeStyle{Size: 21, Weight: 400, Leading: 1.3, Tracking: trackDisplay, Font: serifFont}
+	// Section and panel headings.
+	styleTitle = typeStyle{Size: fsTitle, Weight: 400, Leading: 1.38, Tracking: trackTitle}
+	// Reading copy.
+	styleBody = typeStyle{Size: fsRead, Weight: 400, Leading: 1.72, Tracking: trackBody}
+	// Controls and labels.
+	styleUI = typeStyle{Size: fsUI, Weight: 400, Leading: 1.4, Tracking: trackUI}
+	// Secondary meta.
+	styleCaption = typeStyle{Size: fsCaption, Weight: 400, Leading: 1.4, Tracking: trackCaption}
+	// Small mono labels: stage numbers, counters, kickers.
+	styleMono = typeStyle{Size: 9, Weight: 400, Leading: 1.2, Tracking: trackMono, Font: monoFont}
+)
+
+// Motion. Apple's defaults are critically damped: nothing overshoots unless
+// a gesture threw it. Bounce is reserved for momentum, so every spring here
+// settles without it.
+var (
+	// springSheet brings a panel or sheet in. Response 0.34, damping 1.0.
+	springSheet = ui.Animation{Spring: ui.SpringOptions{Duration: 340 * time.Millisecond}}
+	// springMove repositions something that is already on screen.
+	springMove = ui.Animation{Spring: ui.SpringOptions{Duration: 400 * time.Millisecond}}
+	// springHover answers the pointer: quick, no overshoot.
+	springHover = ui.Animation{Spring: ui.SpringOptions{Duration: 260 * time.Millisecond}}
+	// springPress is the press and release of a control.
+	springPress = ui.Animation{Spring: ui.SpringOptions{Duration: 220 * time.Millisecond}}
+)
+
+// pressPose is the press feedback: the control acknowledges the pointer the
+// instant it goes down, not when it comes up. Hover is a whisper on top.
+func pressPose(el ui.Element, hovered, pressed bool, base float32) {
+	pose := ui.Pose{Scale: base}
+	switch {
+	case pressed:
+		pose.Scale = base * 0.97
+	case hovered:
+		pose.Scale = base * 1.02
+	}
+	el.AnimatePose(pose, springPress)
+}
 
 const (
 	readingWidth  float32 = 680
@@ -41,6 +127,48 @@ func composerGlass(dark bool) glass.Glass {
 		Clarity: 0.5,
 		Tint:    paletteFor(dark).composerTint,
 	}
+}
+
+// cardGlass is the floating surface shared by the route preview and the
+// ability detail: the same material, so the two read as one layer of chrome.
+func cardGlass(dark bool, alpha float32) glass.Glass {
+	p := paletteFor(dark)
+	return glass.Glass{
+		Style:   glass.Regular,
+		Clarity: 0.34,
+		Tint:    withAlpha(p.panelBg, alpha),
+	}
+}
+
+// composerShadow is the lift under the composer. A raised surface casts a
+// soft, wide shadow; in light mode the paper needs a little more of it to
+// separate from a canvas of almost the same value.
+func composerShadow(dark bool) ui.Color {
+	p := paletteFor(dark)
+	if dark {
+		return ui.RGBA(0, 0, 0, 0.10)
+	}
+	return withAlpha(p.shadow, 0.55)
+}
+
+// composerEdge is the brightness of the lit top edge. In light mode the
+// material is already near-white, so the highlight has to be a warm tint
+// rather than pure white or it disappears into the fill.
+func composerEdge(dark bool) float32 {
+	if dark {
+		return 0.22
+	}
+	return 0.9
+}
+
+// cardShadow is the lift under a floating card. Bigger surfaces read as
+// thicker, so the shadow is deeper than the composer's.
+func cardShadow(dark bool) ui.Color {
+	p := paletteFor(dark)
+	if dark {
+		return withAlpha(p.shadow, 0.85)
+	}
+	return withAlpha(p.shadow, 0.75)
 }
 
 type palette struct {
@@ -75,11 +203,11 @@ type palette struct {
 func paletteFor(dark bool) palette {
 	if dark {
 		return palette{
-			backdropA:    ui.RGBA(24, 25, 22, 0.97),
-			backdropB:    ui.RGBA(33, 34, 29, 0.97),
+			backdropA:    ui.RGBA(22, 23, 20, 0.97),
+			backdropB:    ui.RGBA(29, 30, 26, 0.97),
 			canvas:       ui.Hex("#171815"),
-			composerTint: ui.Hex("#25261F"),
-			panelBg:      ui.Hex("#25261F"),
+			composerTint: ui.Hex("#2C2D26"),
+			panelBg:      ui.Hex("#2A2B24"),
 			surface:      ui.RGBA(242, 240, 233, 0.035),
 			surface2:     ui.RGBA(242, 240, 233, 0.06),
 			text:         ui.Hex("#F2F0E9"),
@@ -101,14 +229,17 @@ func paletteFor(dark bool) palette {
 			navHover:     ui.RGBA(242, 240, 233, 0.09),
 			navLine:      ui.RGBA(242, 240, 233, 0.08),
 			fieldBg:      ui.RGBA(242, 240, 233, 0.07),
-		}
+			}
 	}
 	return palette{
-		backdropA:    ui.Hex("#F2EEE4"),
-		backdropB:    ui.Hex("#E8E3D5"),
+		backdropA:    ui.Hex("#F4F1E9"),
+		backdropB:    ui.Hex("#EDE9DC"),
 		canvas:       ui.Hex("#F3F1EB"),
-		composerTint: ui.Hex("#F6F1E5"),
-		panelBg:      ui.Hex("#F8F3E7"),
+		// The composer and panels sit above the canvas, so they must be
+		// lighter than it. A tint a shade off the canvas reads as paint,
+		// not as a raised material.
+		composerTint: ui.Hex("#FCFAF3"),
+		panelBg:      ui.Hex("#FCFAF4"),
 		surface:      ui.RGBA(255, 251, 241, 0.34),
 		surface2:     ui.RGBA(255, 251, 241, 0.54),
 		text:         ui.Hex("#1E1E1A"),
@@ -164,29 +295,31 @@ func appTheme(dark bool) *ui.Theme {
 
 // heatStyle returns the fill, border and text colors of a mastery tile.
 // Mastery reads as one jade scale so the heatmap follows the app's single
-// accent instead of introducing another hue.
+// accent instead of introducing another hue. The lowest step stays visible
+// on warm paper: a mark at 10% alpha disappeared into the canvas and the
+// profile read as empty rather than as "not yet learned".
 func heatStyle(mastery int, dark bool) (ui.Color, ui.Color, ui.Color) {
 	if dark {
 		switch mastery {
 		case 1:
-			return ui.RGBA(147, 205, 184, 0.26), ui.RGBA(147, 205, 184, 0.36), ui.Hex("#BDE5D7")
+			return ui.RGBA(147, 205, 184, 0.42), ui.RGBA(147, 205, 184, 0.36), ui.Hex("#BDE5D7")
 		case 2:
-			return ui.RGBA(147, 205, 184, 0.36), ui.RGBA(147, 205, 184, 0.55), ui.Hex("#E6F7F1")
+			return ui.RGBA(147, 205, 184, 0.66), ui.RGBA(147, 205, 184, 0.55), ui.Hex("#E6F7F1")
 		case 3:
-			return ui.Hex("#2F6B57"), ui.Hex("#93CDB8"), ui.Hex("#FFFFFF")
+			return ui.Hex("#93CDB8"), ui.Hex("#93CDB8"), ui.Hex("#171815")
 		default:
-			return ui.RGBA(242, 240, 233, 0.15), ui.RGBA(242, 240, 233, 0.20), ui.Hex("#8A8B80")
+			return ui.RGBA(242, 240, 233, 0.26), ui.RGBA(242, 240, 233, 0.20), ui.Hex("#8A8B80")
 		}
 	}
 	switch mastery {
 	case 1:
-		return ui.RGBA(47, 107, 87, 0.30), ui.RGBA(47, 107, 87, 0.42), ui.Hex("#2F6B57")
+		return ui.RGBA(47, 107, 87, 0.34), ui.RGBA(47, 107, 87, 0.42), ui.Hex("#2F6B57")
 	case 2:
-		return ui.RGBA(47, 107, 87, 0.44), ui.RGBA(47, 107, 87, 0.55), ui.Hex("#1F4E3E")
+		return ui.RGBA(47, 107, 87, 0.58), ui.RGBA(47, 107, 87, 0.55), ui.Hex("#1F4E3E")
 	case 3:
 		return ui.Hex("#2F6B57"), ui.Hex("#275846"), ui.Hex("#FFFFFF")
 	default:
-		return ui.RGBA(47, 107, 87, 0.10), ui.RGBA(47, 107, 87, 0.24), ui.Hex("#5F7A6E")
+		return ui.RGBA(60, 52, 35, 0.22), ui.RGBA(47, 107, 87, 0.24), ui.Hex("#5F7A6E")
 	}
 }
 

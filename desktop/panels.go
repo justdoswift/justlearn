@@ -2,11 +2,9 @@ package main
 
 import (
 	"strings"
-	"time"
 
 	"github.com/justdoswift/justlearn/desktop/internal/store"
 
-	"github.com/egoist/mygo/plugins/glass"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -21,8 +19,8 @@ const (
 )
 
 var (
-	panelSpring = ui.Animation{Spring: ui.SpringOptions{Duration: 320 * time.Millisecond, Bounce: 0.05}}
-	railSpring  = ui.Animation{Spring: ui.SpringOptions{Duration: 220 * time.Millisecond, Bounce: 0.08}}
+	panelSpring = springSheet
+	railSpring  = springHover
 )
 
 type routeStage struct {
@@ -125,9 +123,9 @@ func (a *app) routeRail(c *ui.Context, t *ui.Theme) {
 					// The stage number is what turns a column of dashes into
 					// a scale. Two ticks alone read as a rendering accident.
 					ui.Text(c, twoDigits(i+1)).Width(16).FontSize(9).Font(monoFont).
-						TextColor(withAlpha(p.faint, 0.9))
+						LetterSpacing(trackMono).TextColor(withAlpha(p.faint, 0.9))
 					tracks[i] = ui.Box(c).Width(railTickWidth).Height(railTickH).Radius(railTickH / 2).
-						Background(withAlpha(p.faint, 0.34)).TransformOrigin(0, 0.5).Clip()
+						Background(withAlpha(p.faint, railTrackAlpha(t.Dark))).TransformOrigin(0, 0.5).Clip()
 					tracks[i].Children(func() {
 						fills[i] = ui.Box(c).Height(railTickH).Radius(railTickH / 2).
 							TransformOrigin(0, 0.5)
@@ -160,7 +158,14 @@ func (a *app) routeRail(c *ui.Context, t *ui.Theme) {
 			}
 			fills[i].WidthPercent(percent * 100).
 				Background(a.railTickColor(p, stages[i], i == selected))
-			tracks[i].AnimatePose(ui.Pose{Scale: railTickScale(distance)}, railSpring)
+			// The pyramid is the hint: ticks lean toward the stage the
+			// pointer is on, so the shape telegraphs where the card will
+			// appear before it does.
+			scale := railTickScale(distance)
+			if buttons[i].Pressed() {
+				scale *= 0.94
+			}
+			tracks[i].AnimatePose(ui.Pose{Scale: scale}, railSpring)
 			if buttons[i].Clicked() {
 				if a.railSelected == i {
 					a.railSelected = -1
@@ -204,6 +209,16 @@ func twoDigits(n int) string {
 	return string(rune('0'+n/10)) + string(rune('0'+n%10))
 }
 
+// railTrackAlpha is the weight of an unfilled tick. On warm paper a 34%
+// track disappeared into the canvas and the rail stopped reading as a scale
+// at all; the dark canvas needs less because the same alpha reads stronger.
+func railTrackAlpha(dark bool) float32 {
+	if dark {
+		return 0.44
+	}
+	return 0.46
+}
+
 func (a *app) railTickColor(p palette, stage routeStage, selected bool) ui.Color {
 	done, total := routeProgress(stage.Nodes)
 	switch {
@@ -214,7 +229,7 @@ func (a *app) railTickColor(p palette, stage routeStage, selected bool) ui.Color
 	case selected:
 		return withAlpha(p.accent, 0.72)
 	default:
-		return withAlpha(p.faint, 0.72)
+		return withAlpha(p.faint, 0.85)
 	}
 }
 
@@ -225,16 +240,16 @@ func (a *app) routeRailCard(c *ui.Context, t *ui.Theme, p palette, stage routeSt
 		percent = done * 100 / total
 	}
 	card := ui.Column(c).Width(railCardWidth).Padding(13, 15, 14, 15).Radius(16).
-		Material(glass.Glass{Style: glass.Regular, Clarity: 0.35, Tint: withAlpha(p.composerTint, 0.9)}).
-		BorderWidth(1).BorderColor(withAlpha(p.borderStrong, 0.45)).
-		Shadow(0, 18, 44, 0, withAlpha(p.shadow, 0.8))
+		Material(cardGlass(t.Dark, 0.9)).
+		BorderWidth(1).BorderColor(withAlpha(p.borderStrong, 0.4)).
+		Shadow(0, 18, 44, 0, cardShadow(t.Dark))
 	card.Children(func() {
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
-			ui.Textf(c, "阶段 %s", twoDigits(index+1)).FontSize(9).Font(monoFont).TextColor(p.faint)
+			styleMono.apply(ui.Textf(c, "阶段 %s", twoDigits(index+1))).TextColor(p.faint)
 			ui.Spacer(c)
-			ui.Textf(c, "%d/%d", done, total).FontSize(9).Font(monoFont).TextColor(p.faint)
+			styleMono.apply(ui.Textf(c, "%d/%d", done, total)).TextColor(p.faint)
 		})
-		ui.Text(c, stage.Title).FontSize(14).FontWeight(400).LineHeight(1.35).TextColor(p.text).
+		styleTitle.apply(ui.Text(c, stage.Title)).TextColor(p.text).
 			MaxLines(2).Padding(5, 0, 0, 0)
 		ui.Box(c).FillWidth().Height(2).Radius(1).Background(p.fieldBg).Clip().Margin(8, 0, 10, 0).Children(func() {
 			if percent > 0 {
@@ -250,7 +265,7 @@ func (a *app) routeRailCard(c *ui.Context, t *ui.Theme, p palette, stage routeSt
 		}
 		if len(stage.Nodes) > len(visible) {
 			ui.Textf(c, "另有 %d 个节点", len(stage.Nodes)-len(visible)).
-				FontSize(9).TextColor(p.faint).Padding(2, 0, 0, 0)
+				FontSize(9).LetterSpacing(trackCaption).TextColor(p.faint).Padding(2, 0, 0, 0)
 		}
 	})
 	return card
@@ -277,9 +292,9 @@ func (a *app) routeRailNode(c *ui.Context, p palette, node store.Node) {
 			dot.Background(p.panelBg).BorderWidth(1).BorderColor(p.borderStrong)
 		}
 		ui.Text(c, node.Title).Grow(1).MinWidth(0).FontSize(11.5).FontWeight(400).
-			TextColor(fg).MaxLines(1)
+			LetterSpacing(trackUI).TextColor(fg).MaxLines(1)
 		if current {
-			ui.Text(c, "现在").FontSize(8.5).TextColor(p.accent)
+			ui.Text(c, "现在").FontSize(8.5).LetterSpacing(trackCaption).TextColor(p.accent)
 		}
 	})
 }
