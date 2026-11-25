@@ -1,0 +1,241 @@
+/* The reading surface: what the tutor writes, set as a page rather than a
+   chat bubble. 14px on a 680px measure, 1.8 line height, and headings that
+   step up in size only. */
+
+.reading {
+  color: color-mix(in oklch, var(--foreground) 88%, transparent);
+  font-size: 14px;
+  line-height: 1.8;
+  letter-spacing: 0.008em;
+  overflow-wrap: anywhere;
+}
+
+.reading-prompt {
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.reading-prompt p {
+  margin-bottom: 0.55em;
+}
+
+.reading-prompt pre {
+  margin: 0.6em 0 0.2em;
+}
+
+.reading > :first-child {
+  margin-top: 0;
+}
+.reading > :last-child {
+  margin-bottom: 0;
+}
+
+.reading p {
+  margin: 0 0 0.95em;
+}
+
+.reading h1,
+.reading h2,
+.reading h3,
+.reading h4 {
+  color: var(--foreground);
+  font-weight: 400;
+  letter-spacing: 0;
+  margin: 1.9em 0 0.6em;
+}
+
+.reading h1 {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  line-height: 1.4;
+}
+.reading h2 {
+  font-size: 17px;
+  line-height: 1.5;
+}
+.reading h3 {
+  font-size: 15px;
+  line-height: 1.55;
+}
+.reading h4 {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: color-mix(in oklch, var(--foreground) 78%, transparent);
+}
+
+.reading strong,
+.reading b {
+  color: var(--foreground);
+  font-weight: 400;
+}
+
+.reading em {
+  font-style: italic;
+  color: color-mix(in oklch, var(--foreground) 78%, transparent);
+}
+
+.reading a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in oklch, var(--brand) 35%, transparent);
+  transition: text-decoration-color 160ms ease;
+}
+.reading a:hover {
+  text-decoration-color: var(--brand);
+}
+
+.reading ul,
+.reading ol {
+  margin: 0 0 1em;
+  padding-left: 1.15em;
+}
+
+.reading ul {
+  list-style: none;
+  padding-left: 1em;
+}
+
+.reading ul > li {
+  position: relative;
+}
+
+.reading ul > li::before {
+  content: "";
+  position: absolute;
+  left: -0.86em;
+  top: 0.78em;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background-color: color-mix(in oklch, var(--brand) 70%, transparent);
+}
+
+.reading ol {
+  list-style: decimal;
+}
+.reading ol > li::marker {
+  color: color-mix(in oklch, var(--foreground) 45%, transparent);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.reading li {
+  margin: 0.3em 0;
+  padding-left: 0.15em;
+}
+
+.reading li > ul,
+.reading li > ol {
+  margin: 0.3em 0 0.2em;
+}
+
+.reading blockquote {
+  margin: 1.4em 0;
+  padding: 0.1em 0 0.1em 1em;
+  border-left: 1px solid color-mix(in oklch, var(--brand) 55%, transparent);
+  color: color-mix(in oklch, var(--foreground) 70%, transparent);
+}
+.reading blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.reading hr {
+  height: 1px;
+  margin: 2em 0;
+  border: 0;
+  background-color: var(--border);
+}
+
+.reading code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  letter-spacing: 0;
+  padding: 0.14em 0.36em;
+  border-radius: 4px;
+  background-color: color-mix(in oklch, var(--foreground) 5.5%, transparent);
+  color: color-mix(in oklch, var(--foreground) 92%, transparent);
+}
+
+.reading pre {
+  margin: 1.3em 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  border-radius: 10px;
+  background-color: color-mix(in oklch, var(--foreground) 4.5%, transparent);
+  box-shadow: inset 0 0 0 1px var(--border);
+  line-height: 1.65;
+}
+
+.reading pre code {
+  padding: 0;
+  background: none;
+  font-size: 12px;
+  color: color-mix(in oklch, var(--foreground) 86%, transparent);
+}
+
+.reading table {
+  width: 100%;
+  margin: 1.3em 0;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.reading thead th {
+  color: color-mix(in oklch, var(--foreground) 58%, transparent);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  padding: 0 12px 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.reading tbody td {
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  vertical-align: top;
+}
+
+.reading tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.reading img {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--glass-edge);
+}
+
+.reading kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* A stream that is still arriving: one mark at its end, not a shimmer across
+   the text. */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.95em;
+  margin-left: 3px;
+  translate: 0 0.12em;
+  background-color: color-mix(in oklch, var(--brand) 70%, transparent);
+  animation: caret-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes caret-blink {
+  0%,
+  58% {
+    opacity: 1;
+  }
+  59%,
+  100% {
+    opacity: 0.1;
+  }
+}

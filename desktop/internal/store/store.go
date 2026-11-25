@@ -408,6 +408,25 @@ func (s *Store) Messages(conversationID string) ([]Message, error) {
 	return out, nil
 }
 
+// MessageByID reads one message. A quiz answer is stored in the message's
+// own payload, so recording a choice needs the row, not the conversation.
+func (s *Store) MessageByID(id string) (Message, error) {
+	rows, err := s.query(context.Background(), `
+		SELECT id, conversation_id, role, kind, text, payload, created_at
+		FROM messages WHERE id = ?`, id)
+	if err != nil {
+		return Message{}, err
+	}
+	if len(rows.Values) == 0 {
+		return Message{}, fmt.Errorf("message %q not found", id)
+	}
+	row := rows.Values[0]
+	return Message{
+		ID: asString(row[0]), ConversationID: asString(row[1]), Role: asString(row[2]),
+		Kind: asString(row[3]), Text: asString(row[4]), Payload: asString(row[5]), CreatedAt: asTime(row[6]),
+	}, nil
+}
+
 func (s *Store) AppendMessage(m *Message) error {
 	if m.ID == "" {
 		m.ID = newID()

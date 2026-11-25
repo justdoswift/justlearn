@@ -1,0 +1,345 @@
+/* JustLearn — warm paper, deep ink, one jade.
+ *
+ * Solid Glass stays the material: the rim of light along a pane's top edge, the
+ * hairline all round, the shadow underneath, and thickness as the only depth.
+ * This file only retints it: daylight paper instead of cool grey, ink instead
+ * of black, jade in place of the neutral brand. Nothing here changes how a
+ * pane is built.
+ */
+
+@theme inline {
+  --font-serif: "Source Han Serif SC", "Songti SC", "Noto Serif SC", "Songti TC", ui-serif, Georgia, serif;
+}
+
+/* ---- Daylight ------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  --radius: 0.8125rem;
+  --radius-control: 0.625rem;
+
+  /* The desk: warm paper, warmed a little at the top where the light falls. */
+  --background: #f3f1eb;
+  --foreground: #171815;
+  --light-1: oklch(0.99 0.012 92 / 70%);
+  --light-2: oklch(0.98 0.014 84 / 34%);
+  --light-3: oklch(0.96 0.018 78 / 26%);
+
+  /* Thickness: panel < card < popover. Paper panes, not grey glass. */
+  --panel: rgb(252 251 247 / 46%);
+  --card: rgb(253 252 249 / 68%);
+  --card-foreground: #171815;
+  --popover: rgb(250 249 243 / 97%);
+  --popover-foreground: #171815;
+
+  --primary: #22241f;
+  --primary-foreground: #f7f5ef;
+  --secondary: rgb(23 24 21 / 5.5%);
+  --secondary-foreground: #22241f;
+  --muted: rgb(23 24 21 / 4.2%);
+  --muted-foreground: rgb(32 34 29 / 58%);
+  --accent: rgb(23 24 21 / 5.5%);
+  --accent-foreground: #171815;
+  --destructive: oklch(0.55 0.16 30);
+  --border: rgb(23 24 21 / 10%);
+  --input: rgb(23 24 21 / 14%);
+  --ring: oklch(0.47 0.07 165);
+
+  --glass-rim: rgb(255 255 255 / 94%);
+  --glass-inner: rgb(255 255 255 / 46%);
+  --glass-edge: rgb(40 38 30 / 9%);
+  --popover-edge: rgb(40 38 30 / 10%);
+  --popover-under: rgb(40 38 30 / 3%);
+  --glass-shade: rgb(61 55 41 / 16%);
+  --glass-contact: rgb(61 55 41 / 7%);
+  --glass-lift: rgb(61 55 41 / 10%);
+  --glass-control: rgb(255 255 255 / 52%);
+  --glass-control-rim: rgb(255 255 255 / 88%);
+  --glass-state: rgb(23 24 21 / 5%);
+  --glass-state-rim: rgb(255 255 255 / 76%);
+  --glass-state-edge: rgb(23 24 21 / 12%);
+  --glass-state-armed: rgb(23 24 21 / 16%);
+  --hover: rgb(23 24 21 / 5%);
+  --hover-faint: rgb(23 24 21 / 2.4%);
+
+  --primary-solid: 94%;
+  --primary-rim: rgb(255 255 255 / 16%);
+  --primary-under: rgb(0 0 0 / 46%);
+  --primary-inner: rgb(255 255 255 / 4%);
+  --primary-edge: rgb(23 24 21 / 45%);
+
+  --field: rgb(255 255 255 / 56%);
+  --field-rim: rgb(255 255 255 / 92%);
+  --field-edge: rgb(40 38 30 / 12%);
+  --well-shade: rgb(61 55 41 / 6%);
+  --well-rim: rgb(255 255 255 / 74%);
+  --focus-line: oklch(0.47 0.07 165 / 62%);
+
+  --knob: #fdfdfa;
+  --knob-shade: rgb(61 55 41 / 30%);
+  --mark-solid: 62%;
+  --mark-rim: rgb(255 255 255 / 96%);
+  --mark-edge: rgb(40 38 30 / 20%);
+  --mark-line: oklch(0.47 0.07 165 / 70%);
+
+  --glass-blur: blur(22px);
+  --glass-blur-control: blur(14px);
+
+  /* The one accent. Jade marks what is live, never a surface. */
+  --brand: #2f6b57;
+  --brand-foreground: #f4f8f4;
+  --brand-muted: rgb(47 107 87 / 12%);
+
+  --status-running: rgb(32 34 29 / 55%);
+  --status-done: oklch(0.47 0.07 165);
+  --success: oklch(0.47 0.09 158);
+  --status-interrupted: oklch(0.6 0.13 60);
+
+  --link: oklch(0.45 0.07 165);
+  --code-inline: oklch(0.45 0.09 30);
+  --syn-keyword: oklch(0.42 0.06 210);
+  --syn-string: oklch(0.45 0.07 160);
+  --syn-number: oklch(0.5 0.09 62);
+  --syn-name: oklch(0.42 0.07 300);
+
+  --chart-1: oklch(0.42 0.05 160);
+  --chart-2: oklch(0.55 0.04 160);
+  --chart-3: oklch(0.66 0.03 160);
+  --chart-4: oklch(0.76 0.02 160);
+  --chart-5: oklch(0.84 0.015 160);
+
+  --sidebar: rgb(252 251 247 / 62%);
+  --sidebar-foreground: #22241f;
+  --sidebar-primary: #22241f;
+  --sidebar-primary-foreground: #f7f5ef;
+  --sidebar-accent: rgb(23 24 21 / 5%);
+  --sidebar-accent-foreground: #171815;
+  --sidebar-border: rgb(23 24 21 / 10%);
+  --sidebar-ring: oklch(0.47 0.07 165);
+}
+
+/* ---- Night ---------------------------------------------------------------- */
+
+.dark {
+  color-scheme: dark;
+
+  --background: #171815;
+  --foreground: #e9e6dc;
+  --light-1: oklch(0.5 0.02 90 / 12%);
+  --light-2: oklch(0.45 0.02 140 / 7%);
+  --light-3: transparent;
+
+  --panel: rgb(233 229 216 / 4.5%);
+  --card: rgb(58 57 50 / 52%);
+  --card-foreground: #eeeae0;
+  --popover: rgb(40 41 36 / 98%);
+  --popover-foreground: #eeeae0;
+
+  --primary: #e9e6dc;
+  --primary-foreground: #1a1b18;
+  --secondary: rgb(233 229 216 / 8%);
+  --secondary-foreground: #eeeae0;
+  --muted: rgb(233 229 216 / 6%);
+  --muted-foreground: rgb(233 229 216 / 62%);
+  --accent: rgb(233 229 216 / 7.5%);
+  --accent-foreground: #f2efe6;
+  --destructive: oklch(0.7 0.17 25);
+  --border: rgb(233 229 216 / 11%);
+  --input: rgb(233 229 216 / 14%);
+  --ring: oklch(0.7 0.06 165);
+
+  --glass-rim: rgb(255 252 244 / 15%);
+  --glass-inner: rgb(255 252 244 / 4%);
+  --glass-edge: rgb(255 252 244 / 7%);
+  --popover-edge: rgb(255 252 244 / 8%);
+  --popover-under: rgb(0 0 0 / 0%);
+  --glass-shade: rgb(0 0 0 / 62%);
+  --glass-contact: rgb(0 0 0 / 12%);
+  --glass-lift: rgb(0 0 0 / 24%);
+  --glass-control: rgb(255 252 244 / 7%);
+  --glass-control-rim: rgb(255 252 244 / 12%);
+  --glass-state: rgb(255 252 244 / 8%);
+  --glass-state-rim: rgb(255 252 244 / 12%);
+  --glass-state-edge: rgb(255 252 244 / 9%);
+  --glass-state-armed: rgb(255 252 244 / 14%);
+  --hover: rgb(255 252 244 / 8%);
+  --hover-faint: rgb(255 252 244 / 4%);
+
+  --primary-solid: 88%;
+  --primary-rim: rgb(255 255 255 / 90%);
+  --primary-under: rgb(0 0 0 / 26%);
+  --primary-inner: rgb(0 0 0 / 6%);
+  --primary-edge: rgb(255 255 255 / 22%);
+
+  --field: rgb(255 252 244 / 6%);
+  --field-rim: rgb(255 252 244 / 14%);
+  --field-edge: rgb(255 252 244 / 8%);
+  --well-shade: rgb(0 0 0 / 36%);
+  --well-rim: rgb(255 252 244 / 8%);
+  --focus-line: oklch(0.7 0.06 165 / 55%);
+
+  --knob: oklch(0.97 0 0);
+  --knob-shade: rgb(0 0 0 / 55%);
+  --mark-solid: 68%;
+  --mark-rim: rgb(255 255 255 / 88%);
+  --mark-edge: rgb(255 255 255 / 20%);
+  --mark-line: oklch(0.8 0.08 165 / 62%);
+
+  --glass-blur: blur(24px);
+  --glass-blur-control: blur(14px);
+
+  --brand: #93cdb8;
+  --brand-foreground: #17241f;
+  --brand-muted: rgb(147 205 184 / 15%);
+
+  --status-running: rgb(233 229 216 / 60%);
+  --status-done: oklch(0.8 0.08 165);
+  --success: oklch(0.78 0.12 158);
+  --status-interrupted: oklch(0.78 0.14 62);
+
+  --link: oklch(0.79 0.07 165);
+  --code-inline: oklch(0.78 0.09 26);
+  --syn-keyword: oklch(0.78 0.06 210);
+  --syn-string: oklch(0.8 0.08 160);
+  --syn-number: oklch(0.82 0.09 70);
+  --syn-name: oklch(0.79 0.07 300);
+
+  --chart-1: oklch(0.8 0.06 165);
+  --chart-2: oklch(0.7 0.05 165);
+  --chart-3: oklch(0.6 0.04 165);
+  --chart-4: oklch(0.5 0.03 165);
+  --chart-5: oklch(0.42 0.02 165);
+
+  --sidebar: rgb(23 24 21 / 62%);
+  --sidebar-foreground: #e9e6dc;
+  --sidebar-primary: #e9e6dc;
+  --sidebar-primary-foreground: #1a1b18;
+  --sidebar-accent: rgb(233 229 216 / 7%);
+  --sidebar-accent-foreground: #f2efe6;
+  --sidebar-border: rgb(233 229 216 / 10%);
+  --sidebar-ring: oklch(0.7 0.06 165);
+}
+
+/* ---- Type -----------------------------------------------------------------
+
+   One face for the interface, a serif for a lesson's own title. Weight stops
+   at 400 everywhere: hierarchy comes from size, colour, measure and the
+   serif, not from a heavier stroke. */
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-size: 14px;
+    line-height: 1.7;
+    letter-spacing: 0.01em;
+  }
+
+  body::selection,
+  ::selection {
+    background-color: color-mix(in oklch, var(--brand) 22%, transparent);
+  }
+
+  :where(h1, h2, h3, h4, h5, h6, b, strong, th, button, [data-slot="button"]) {
+    font-weight: 400;
+  }
+
+  :where(.font-medium, .font-semibold, .font-bold, .font-extrabold) {
+    font-weight: 400 !important;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+    background-color: color-mix(in oklch, var(--foreground) 14%, transparent);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklch, var(--foreground) 22%, transparent);
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* A pane that holds a lesson or a question sits a step above the page, and
+   keeps the material's edge rather than drawing a border of its own. */
+@utility pane {
+  background-color: var(--card);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-width: 0;
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim),
+    inset 0 0 0 1px var(--glass-inner),
+    0 0 0 1px var(--glass-edge),
+    0 1px 2px var(--glass-contact),
+    0 18px 40px -22px var(--glass-shade);
+}
+
+@utility rule {
+  box-shadow: inset 0 0 0 1px var(--glass-edge);
+}
+
+/* An element that must stay legible on the jade accent. */
+@utility ink-jade {
+  color: var(--brand);
+}
+
+/* The box you write in: the pane stays as Solid Glass draws it, and focus
+   lights its hairline jade instead of a ring standing off it. */
+.jl-composer:focus-within {
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim),
+    inset 0 0 0 1px var(--glass-inner),
+    0 0 0 1px color-mix(in oklch, var(--brand) 42%, transparent),
+    0 1px 2px var(--glass-contact),
+    0 18px 40px -22px var(--glass-shade);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Placeholders carry the next step, so they stay readable: no ghost text
+   under the 4.5:1 line. */
+textarea::placeholder,
+input::placeholder {
+  color: color-mix(in oklch, var(--foreground) 58%, transparent);
+  opacity: 1;
+}
+
+/* A phone's browser zooms the page when a field under 16px takes focus. */
+@media (max-width: 640px) {
+  .jl-composer textarea {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}
+
+/* A dialog veils the desk; it does not fog it. The base overlay blurs the
+   page, which on a reading surface turns the text behind into a smudge. */
+[data-slot="dialog-overlay"] {
+  background-color: color-mix(in oklch, var(--foreground) 20%, transparent);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.dark [data-slot="dialog-overlay"] {
+  background-color: rgb(0 0 0 / 34%);
+}

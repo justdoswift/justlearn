@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "./solid-glass.css";
+@import "@fontsource-variable/geist";
+
+/* JustLearn's palette, type and prose, over Solid Glass's material. */
+@import "./brand.css";
+@import "./reading.css";
+
+@custom-variant dark (&:is(.dark *));

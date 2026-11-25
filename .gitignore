@@ -10,7 +10,17 @@ data/
 tsconfig.tsbuildinfo
 .env.opencode
 
+# the web server's local database
+justlearn.db
+justlearn.db-shm
+justlearn.db-wal
+
 # local agent settings and design process files
 .claude/
 .oil-ui/
 desktop/testdata/*.png
+
+# local agent tooling
+.agents/
+.perch/
+skills-lock.json
